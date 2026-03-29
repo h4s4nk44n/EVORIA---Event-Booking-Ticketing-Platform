@@ -19,7 +19,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization'],
 }));
 
-app.options('*', cors()); // Handle preflight requests
+app.options('/{*path}', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));

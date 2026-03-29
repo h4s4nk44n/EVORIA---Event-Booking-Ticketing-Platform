@@ -89,7 +89,7 @@ describe('POST /auth/login', () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe('Invalid credentials');
+    expect(res.body.error).toBe('Invalid credentials');
   });
 
   // 6. Olmayan email → 401 ve aynı mesaj (user enumeration önlemi)
@@ -100,7 +100,7 @@ describe('POST /auth/login', () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe('Invalid credentials');
+    expect(res.body.error).toBe('Invalid credentials');
   });
 
   // 7. Eksik body → 400

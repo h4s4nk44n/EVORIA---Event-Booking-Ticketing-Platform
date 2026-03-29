@@ -206,14 +206,6 @@ ss -ltnp | grep 5432
 
 ---
 
-### ❌ Type errors (Express / Zod)
-- Ensure:
-```json
-"@types/express": "^4.x"
-```
-
----
-
 ### ❌ PrismaClient not found
 Run:
 
@@ -239,19 +231,3 @@ Flow:
 ```
 Request → Route → Controller → Service → Prisma → DB
 ```
-
----
-
-## 🔐 Next Steps
-
-- [ ] User registration & login (JWT)
-- [ ] Role-based access control (RBAC)
-- [ ] Input validation with Zod
-- [ ] Centralized error handling
-- [ ] Logging system
-
----
-
-## 📄 License
-
-MIT

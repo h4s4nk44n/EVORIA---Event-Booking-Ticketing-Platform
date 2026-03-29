@@ -6,6 +6,7 @@ import routes from './routes';
 import { config } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { prisma } from './config/prisma';
+import { notFound } from './middlewares/notFound';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization'],
 }));
 
+
 app.options('/{*path}', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,9 +30,7 @@ app.use('/', routes);
 
 app.use(errorHandler);
 
-app.get('/health', async (_req, res) => {
-  await prisma.$queryRaw`SELECT 1`;
-  res.json({ status: 'ok', db: 'connected' });
-});
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

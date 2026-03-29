@@ -9,13 +9,17 @@ import { prisma } from './config/prisma';
 
 const app = express();
 
-app.use(helmet());
-app.use(
-  cors({
-    origin: config.ALLOWED_ORIGIN,
-    credentials: true,
-  }),
-);
+// Written by Hasan Kaan Doygun
+app.use(helmet()); // Sets: X-Frame-Options, X-Content-Type-Options, CSP, etc.
+
+app.use(cors({
+  origin: config.ALLOWED_ORIGIN,  // e.g. 'http://localhost:3001'
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+
+app.options('*', cors()); // Handle preflight requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));

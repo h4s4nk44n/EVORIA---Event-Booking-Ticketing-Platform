@@ -1,3 +1,5 @@
+// This test created for "EVR-9 / authenticate middleware" test
+
 import express, { Request, Response } from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';

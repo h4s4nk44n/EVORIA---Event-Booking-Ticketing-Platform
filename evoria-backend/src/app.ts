@@ -29,11 +29,6 @@ app.use('/', routes);
 
 app.use(errorHandler);
 
-app.get('/health', async (_req, res) => {
-  await prisma.$queryRaw`SELECT 1`;
-  res.json({ status: 'ok', db: 'connected' });
-});
-
 app.use(notFound);
 app.use(errorHandler);
 

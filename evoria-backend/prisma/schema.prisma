@@ -7,11 +7,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ATTENDEE
+  ORGANIZER
+  ADMIN
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
   password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      Role      @default(ATTENDEE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  events    Event[]   @relation("OrganizerEvents")
+  bookings  Booking[]
+
+  @@map("users")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  dateTime    DateTime
+  capacity    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organizerId String
+  organizer   User      @relation("OrganizerEvents", fields: [organizerId], references: [id])
+
+  bookings    Booking[]
+
+  @@map("events")
+}
+
+model Booking {
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+
+  userId    String
+  eventId   String
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("bookings")
 }

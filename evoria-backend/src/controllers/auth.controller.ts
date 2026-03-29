@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/auth.service';
 
@@ -11,11 +10,10 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// login controller — implement in POST /auth/login task
-export const login = async (_req: Request, _res: Response, next: NextFunction) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // TODO: implement in login task
-    next();
+    const result = await authService.loginUser(req.body.email, req.body.password);
+    res.json(result);
   } catch (e) {
     next(e);
   }

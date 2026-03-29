@@ -1,5 +1,8 @@
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
+import { AppError } from '../utils/AppError';
+import { config } from '../config/env';
 
 export async function registerUser(data: {
   name: string;
@@ -23,4 +26,30 @@ export async function registerUser(data: {
   });
 
   return user;
+}
+
+export async function loginUser(email: string, password: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  // Same error message for 'not found' and 'wrong password' — prevents user enumeration
+  if (!user) throw new AppError('Invalid credentials', 401);
+
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) throw new AppError('Invalid credentials', 401);
+
+  const token = jwt.sign(
+    { userId: user.id, email: user.email, role: user.role },
+    config.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    token,
+    user: {
+      id:    user.id,
+      name:  user.name,
+      email: user.email,
+      role:  user.role,
+    },
+  };
 }

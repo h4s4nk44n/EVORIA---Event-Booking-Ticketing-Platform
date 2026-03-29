@@ -1,3 +1,5 @@
+// This test created for "EVR-7 / POST/auth/register" test
+
 import request from 'supertest';
 import app from '../app';
 import { prisma } from '../config/prisma';

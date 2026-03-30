@@ -7,6 +7,7 @@ import { config } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { prisma } from './config/prisma';
 import { notFound } from './middlewares/notFound';
+import adminRouter from './routes/admin.routes';
 
 const app = express();
 
@@ -27,13 +28,12 @@ app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.use('/', routes);
 
-app.use(errorHandler);
-
 app.get('/health', async (_req, res) => {
   await prisma.$queryRaw`SELECT 1`;
   res.json({ status: 'ok', db: 'connected' });
 });
 
+app.use('/admin', adminRouter); // Use routes first
 app.use(notFound);
 app.use(errorHandler);
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { authenticate } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validateRequest } from '../middlewares/validateRequest';
-import { createEvent, updateEvent, deleteEvent } from '../controllers/event.controller';
+import { createEvent, updateEvent, listEvents, getEvent, deleteEvent } from '../controllers/event.controller';
 
 const router = Router();
 
@@ -26,6 +26,10 @@ const updateEventSchema = z.object({
   ).optional(),
   capacity:    z.number().int().min(1, 'Capacity must be at least 1').optional(),
 });
+
+// Public routes — no auth required
+router.get('/',    listEvents);
+router.get('/:id', getEvent);
 
 router.post('/',     authenticate, authorize('ORGANIZER'), validateRequest(createEventSchema), createEvent);
 router.put('/:id',  authenticate, authorize('ORGANIZER'), validateRequest(updateEventSchema), updateEvent);

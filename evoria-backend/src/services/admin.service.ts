@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma';
+import { AppError } from '../utils/AppError';
 
 export async function getAllUsers(page: number, limit: number) {
     const skip = (page - 1) * limit;
@@ -62,11 +63,32 @@ export async function getAllEvents(page: number, limit: number) {
         totalPages: Math.ceil(total / limit),
     };
 }
+export async function deleteUser(adminId: string, targetId: string) {
+    if (adminId === targetId) {
+        throw new AppError('Cannot delete your own admin account', 403);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!user) {
+        throw new AppError('User not found', 404);
+    }
+
+    await prisma.$transaction([
+        prisma.event.deleteMany({ where: { organizerId: targetId } }),
+        prisma.user.delete({ where: { id: targetId } }),
+    ]);
+}
+
+export async function deleteAnyEvent(eventId: string) {
+    const event = await prisma.event.findUnique({ where: { id: eventId } })
+    if (!event) throw new AppError('Event not found', 404)
+    await prisma.event.delete({ where: { id: eventId } })
+}
 
 export async function deleteUserById(id: string) {
-  return prisma.user.delete({
-    where: { id },
-  });
+    return prisma.user.delete({
+        where: { id },
+    });
 }
 
 export async function deleteEventById(id: string) {

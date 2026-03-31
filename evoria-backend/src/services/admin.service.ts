@@ -79,6 +79,12 @@ export async function deleteUser(adminId: string, targetId: string) {
     ]);
 }
 
+export async function deleteAnyEvent(eventId: string) {
+    const event = await prisma.event.findUnique({ where: { id: eventId } })
+    if (!event) throw new AppError('Event not found', 404)
+    await prisma.event.delete({ where: { id: eventId } })
+}
+
 export async function deleteUserById(id: string) {
     return prisma.user.delete({
         where: { id },

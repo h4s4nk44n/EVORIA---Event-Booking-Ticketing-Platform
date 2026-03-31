@@ -29,17 +29,26 @@ export const listAllEvents = async (req: Request, res: Response, next: NextFunct
     }
 };
 
-export const deleteUser = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        await adminService.deleteUserById(req.params.id as any);
-        res.json({ message: 'User deleted successfully.' });
-    } catch (e) {
-        next(e);
-    }
+// export const deleteUser = async (
+//     req: Request,
+//     res: Response,
+//     next: NextFunction
+// ) => {
+//     try {
+//         await adminService.deleteUserById(req.params.id as any);
+//         res.json({ message: 'User deleted successfully.' });
+//     } catch (e) {
+//         next(e);
+//     }
+// };
+
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    await adminService.deleteUser(req.user.userId, req.params.id as string);
+    res.status(204).send();
+  } catch (e) {
+    next(e);
+  }
 };
 
 export const deleteAnyEvent = async (

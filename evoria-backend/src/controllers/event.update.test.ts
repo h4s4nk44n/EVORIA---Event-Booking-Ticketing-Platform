@@ -55,7 +55,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.event.deleteMany({ where: { organizerId: { in: [organizer1Id, organizer2Id] } } });
+  const users = await prisma.user.findMany({
+    where: { email: { contains: '@test-events.com' } },
+    select: { id: true },
+  });
+  const userIds = users.map(u => u.id);
+  await prisma.event.deleteMany({ where: { organizerId: { in: userIds } } });
   await prisma.user.deleteMany({ where: { email: { contains: '@test-events.com' } } });
   await prisma.$disconnect();
 });

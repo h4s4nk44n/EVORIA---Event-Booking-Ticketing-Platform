@@ -42,8 +42,7 @@ describe('errorHandler', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Not found',
+        error: 'Not found',
       });
     });
 
@@ -61,7 +60,7 @@ describe('errorHandler', () => {
     });
 
     it('should handle default 500 status AppError', () => {
-      const err = new AppError('Server error');
+      const err = new AppError('Server error', 500);
       const req = createMockReq();
       const res = createMockRes();
 
@@ -69,8 +68,7 @@ describe('errorHandler', () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: 'Server error',
+        error: 'Server error',
       });
     });
   });

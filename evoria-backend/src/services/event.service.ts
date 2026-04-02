@@ -66,13 +66,13 @@ export async function listEvents(query: {
   ]);
  
   const data = events.map(e => ({
-    id:             e.id,
-    title:          e.title,
-    description:    e.description,
-    dateTime:       e.dateTime,
-    capacity:       e.capacity,
-    organizer:      e.organizer,
-    bookedCount:    e._count.bookings,
+    id: e.id,
+    title: e.title,
+    description: e.description,
+    dateTime: e.dateTime,
+    capacity: e.capacity,
+    organizer: e.organizer,
+    bookedCount: e._count.bookings,
     availableSpots: e.capacity - e._count.bookings,
   }));
  
@@ -100,4 +100,40 @@ export async function getEventById(id: string) {
     bookedCount: event._count.bookings,
     availableSpots: event.capacity - event._count.bookings,
   };
+}
+
+export async function updateEvent(
+  organizerId: string,
+  eventId: string,
+  data: Partial<{
+    title:       string;
+    description: string;
+    dateTime:    string;
+    capacity:    number;
+  }>
+) {
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) throw new AppError('Event not found', 404);
+  if (event.organizerId !== organizerId) throw new AppError('Forbidden', 403);
+ 
+  // Kapasite düşürülüyorsa mevcut booking sayısının altına inemez
+  if (data.capacity !== undefined) {
+    const bookedCount = await prisma.booking.count({ where: { eventId } });
+    if (data.capacity < bookedCount) {
+      throw new AppError(
+        `Cannot reduce capacity below current bookings (${bookedCount})`,
+        422
+      );
+    }
+  }
+ 
+  return prisma.event.update({
+    where: { id: eventId },
+    data: {
+      ...data,
+      ...(data.title       && { title:       xss(data.title) }),
+      ...(data.description && { description: xss(data.description) }),
+      ...(data.dateTime    && { dateTime:     new Date(data.dateTime) }),
+    },
+  });
 }

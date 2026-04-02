@@ -45,20 +45,30 @@ export async function cancelBooking(userId: string, bookingId: string) {
   return { message: 'Booking cancelled successfully' };
 }
 
-export async function getMyBookings(userId: string) {
-  return prisma.booking.findMany({
-    where: { userId },
-    include: {
-      event: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          dateTime: true,
-          capacity: true,
+export async function getMyBookings(userId: string, page: number, limit: number) {
+  const skip = (page - 1) * limit;
+
+  const [bookings, total] = await prisma.$transaction([
+    prisma.booking.findMany({
+      where: { userId },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            dateTime: true,
+            capacity: true,
+            organizer: { select: { name: true } },
+            _count: { select: { bookings: true } },
+          },
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+    }),
+    prisma.booking.count({ where: { userId } }),
+  ]);
+
+  return { data: bookings, total, page, limit };
 }

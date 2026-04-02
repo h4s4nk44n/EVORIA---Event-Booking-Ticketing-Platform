@@ -35,8 +35,10 @@ export const myBookings = async (
   next: NextFunction
 ) => {
   try {
-    const bookings = await bookingService.getMyBookings(req.user.userId);
-    res.json({ bookings });
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+    const result = await bookingService.getMyBookings(req.user.userId, page, limit);
+    res.json(result);
   } catch (e) {
     next(e);
   }

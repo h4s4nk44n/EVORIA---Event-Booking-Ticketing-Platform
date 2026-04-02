@@ -204,14 +204,104 @@ describe('DELETE /bookings/:id', () => {
 });
 
 describe('GET /bookings/me', () => {
-  it('should return the current user bookings', async () => {
+  it('should return paginated response with correct shape', async () => {
     const res = await request(app)
       .get('/bookings/me')
       .set('Authorization', `Bearer ${attendeeToken}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.bookings)).toBe(true);
-    expect(res.body.bookings.length).toBeGreaterThanOrEqual(1);
-    expect(res.body.bookings[0].event).toBeDefined();
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(typeof res.body.total).toBe('number');
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(10);
+    expect(res.body.data.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should include nested event details with organizer and booking count', async () => {
+    const res = await request(app)
+      .get('/bookings/me')
+      .set('Authorization', `Bearer ${attendeeToken}`);
+
+    expect(res.status).toBe(200);
+    const booking = res.body.data[0];
+    expect(booking.event).toBeDefined();
+    expect(booking.event.id).toBeDefined();
+    expect(booking.event.title).toBeDefined();
+    expect(booking.event.dateTime).toBeDefined();
+    expect(booking.event.capacity).toBeDefined();
+    expect(booking.event.organizer).toBeDefined();
+    expect(booking.event.organizer.name).toBe('Booking Test Organizer');
+    expect(booking.event._count).toBeDefined();
+    expect(typeof booking.event._count.bookings).toBe('number');
+  });
+
+  it('should return empty array (not 404) when user has no bookings', async () => {
+    // Create a fresh attendee with no bookings
+    const freshRes = await request(app).post('/auth/register').send({
+      name: 'No Bookings Attendee',
+      email: 'no-bookings@test-booking.com',
+      password: '12345678',
+      role: 'ATTENDEE',
+    });
+    const freshId = freshRes.body.user.id;
+    const freshToken = makeToken('ATTENDEE', freshId);
+
+    const res = await request(app)
+      .get('/bookings/me')
+      .set('Authorization', `Bearer ${freshToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([]);
+    expect(res.body.total).toBe(0);
+    expect(res.body.page).toBe(1);
+
+    // Cleanup
+    await prisma.user.delete({ where: { id: freshId } });
+  });
+
+  it('should only return bookings belonging to the authenticated user', async () => {
+    const res1 = await request(app)
+      .get('/bookings/me')
+      .set('Authorization', `Bearer ${attendeeToken}`);
+
+    const res2 = await request(app)
+      .get('/bookings/me')
+      .set('Authorization', `Bearer ${secondAttendeeToken}`);
+
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+
+    // Attendee 1's bookings should all belong to attendee 1
+    for (const b of res1.body.data) {
+      expect(b.userId).toBe(attendeeId);
+    }
+    // Attendee 2's bookings should all belong to attendee 2
+    for (const b of res2.body.data) {
+      expect(b.userId).toBe(secondAttendeeId);
+    }
+  });
+
+  it('should respect page and limit query parameters', async () => {
+    const res = await request(app)
+      .get('/bookings/me?page=1&limit=1')
+      .set('Authorization', `Bearer ${attendeeToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.length).toBeLessThanOrEqual(1);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(1);
+    expect(res.body.total).toBeGreaterThanOrEqual(1);
+  });
+
+  it('should return 401 without token', async () => {
+    const res = await request(app).get('/bookings/me');
+    expect(res.status).toBe(401);
+  });
+
+  it('should return 403 with ORGANIZER token', async () => {
+    const res = await request(app)
+      .get('/bookings/me')
+      .set('Authorization', `Bearer ${organizerToken}`);
+    expect(res.status).toBe(403);
   });
 });

@@ -50,10 +50,6 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
-  },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   }

@@ -167,3 +167,41 @@ export async function getEventStats(organizerId: string, eventId: string) {
     ticketsRemaining: event.capacity - event._count.bookings,
   };
 }
+
+export async function getEventAttendees(
+  organizerId: string,
+  eventId: string,
+  page: number,
+  limit: number
+) {
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) throw new AppError('Event not found', 404);
+  if (event.organizerId !== organizerId) throw new AppError('Forbidden', 403);
+ 
+  const skip = (page - 1) * limit;
+ 
+  const [bookings, total] = await prisma.$transaction([
+    prisma.booking.findMany({
+      where:   { eventId },
+      skip,
+      take:    limit,
+      orderBy: { createdAt: 'asc' },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    }),
+    prisma.booking.count({ where: { eventId } }),
+  ]);
+ 
+  return {
+    data: bookings.map(b => ({
+      bookingId: b.id,
+      bookedAt:  b.createdAt,
+      user:      b.user,
+    })),
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+}

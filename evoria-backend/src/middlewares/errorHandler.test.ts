@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { errorHandler } from './errorHandler';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import { ZodError } from 'zod';
 
 jest.mock('../utils/logger', () => ({
   logger: {
@@ -116,6 +117,36 @@ describe('errorHandler', () => {
       expect(mockLogger.error).toHaveBeenCalledWith('Unhandled error', {
         error: err,
         stack: undefined,
+      });
+    });
+  });
+  describe('when error is a ZodError', () => {
+    it('should return 400 with validation details', () => {
+      // 1. Sahte (mock) Response objesi oluştur
+      const req = {} as Request;
+      const res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      } as unknown as Response;
+      const next = jest.fn() as NextFunction;
+
+      // 2. Örnek bir ZodError objesi yarat
+      const zodError = new ZodError([
+        {
+          code: 'custom', // 'too_small' yerine 'custom' kullandık
+          message: 'Too small: expected string to have >=3 characters',
+          path: ['body', 'title'],
+        },
+      ]);
+
+      // 3. Middleware'i çağır
+      errorHandler(zodError, req, res, next);
+
+      // 4. Doğru statü ve JSON formatıyla döndüğünü test et
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Validation error',
+        details: zodError.flatten().fieldErrors, // Eğer önceki adımda details: err.flatten().fieldErrors yaptıysan, burayı da ona göre güncellemelisin!
       });
     });
   });

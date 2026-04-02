@@ -36,9 +36,13 @@ export const getEvent = async (req: Request, res: Response, next: NextFunction) 
 
 // Placeholder — implement in PUT /events/:id task
 export const updateEvent = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    // TODO: implement
-    next();
+    try {
+    const event = await eventService.updateEvent(
+      req.user.userId,
+      req.params.id as string,
+      req.body
+    );
+    res.json({ event });
   } catch (e) {
     next(e);
   }

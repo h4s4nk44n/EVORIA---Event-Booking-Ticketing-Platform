@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma';
 import { Prisma } from '@prisma/client';
+import { AppError } from '../utils/AppError';
 
 export async function createEvent(
   organizerId: string,
@@ -73,4 +74,27 @@ export async function listEvents(query: {
   }));
  
   return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+}
+
+export async function getEventById(id: string) {
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: {
+      organizer: { select: { id: true, name: true } },
+      _count: { select: { bookings: true } },
+    },
+  });
+
+  if (!event) throw new AppError('Event not found', 404);
+
+  return {
+    id: event.id,
+    title: event.title,
+    description: event.description,
+    dateTime: event.dateTime,
+    capacity: event.capacity,
+    organizer: event.organizer,
+    bookedCount: event._count.bookings,
+    availableSpots: event.capacity - event._count.bookings,
+  };
 }

@@ -185,13 +185,27 @@ describe('DELETE /bookings/:id', () => {
     bookingToDeleteId = b.id;
   });
 
-  it('should cancel own booking and return 200', async () => {
+  it('should cancel own booking and return 204 No Content', async () => {
     const res = await request(app)
       .delete(`/bookings/${bookingToDeleteId}`)
       .set('Authorization', `Bearer ${secondAttendeeToken}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.message).toMatch(/cancelled/i);
+    expect(res.status).toBe(204);
+    expect(res.body).toEqual({});
+  });
+
+  it('should return 403 when cancelling another user\'s booking', async () => {
+    // attendee1 has a booking on eventId (created in POST /bookings test)
+    const bookings = await prisma.booking.findMany({
+      where: { userId: attendeeId, eventId },
+    });
+    const otherBookingId = bookings[0].id;
+
+    const res = await request(app)
+      .delete(`/bookings/${otherBookingId}`)
+      .set('Authorization', `Bearer ${secondAttendeeToken}`);
+
+    expect(res.status).toBe(403);
   });
 
   it('should return 404 for non-existent booking', async () => {
@@ -200,6 +214,43 @@ describe('DELETE /bookings/:id', () => {
       .set('Authorization', `Bearer ${attendeeToken}`);
 
     expect(res.status).toBe(404);
+  });
+
+  it('should return 401 without auth token', async () => {
+    const res = await request(app).delete('/bookings/some-id');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('should return 403 with ORGANIZER token', async () => {
+    const res = await request(app)
+      .delete('/bookings/some-id')
+      .set('Authorization', `Bearer ${organizerToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it('should increase availableSpots by 1 after cancellation', async () => {
+    // Create a fresh booking for this test
+    const booking = await prisma.booking.create({
+      data: { userId: secondAttendeeId, eventId },
+    });
+
+    // Check availableSpots before cancellation
+    const before = await request(app).get(`/events/${eventId}`);
+    expect(before.status).toBe(200);
+    const spotsBefore = before.body.event.availableSpots;
+
+    // Cancel the booking
+    const del = await request(app)
+      .delete(`/bookings/${booking.id}`)
+      .set('Authorization', `Bearer ${secondAttendeeToken}`);
+    expect(del.status).toBe(204);
+
+    // Check availableSpots after cancellation
+    const after = await request(app).get(`/events/${eventId}`);
+    expect(after.status).toBe(200);
+    expect(after.body.event.availableSpots).toBe(spotsBefore + 1);
   });
 });
 

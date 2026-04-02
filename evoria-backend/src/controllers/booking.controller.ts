@@ -19,11 +19,11 @@ export const cancelBooking = async (
   next: NextFunction
 ) => {
   try {
-    const result = await bookingService.cancelBooking(
+    await bookingService.cancelBooking(
       req.user.userId,
       req.params.id as string
     );
-    res.json(result);
+    res.status(204).send();
   } catch (e) {
     next(e);
   }

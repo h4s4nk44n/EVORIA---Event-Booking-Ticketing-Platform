@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
+import { ZodError } from 'zod';
 
 export function errorHandler(
   err: unknown,
@@ -9,6 +10,13 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
+  // 2. ZOD VALIDASYON HATALARI İÇİN BU BLOĞU EKLEDİK (400 Bad Request döner)
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      error: 'Validation error',
+      details: err.flatten().fieldErrors, // Hangi alanların hatalı olduğunu dönmek frontend için hayat kurtarır
+    });
+  }
   if (err instanceof AppError) {
     logger.error({ message: err.message, stack: err.stack });
     return res.status(err.statusCode).json({

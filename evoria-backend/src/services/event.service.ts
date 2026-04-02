@@ -1,3 +1,4 @@
+import xss from 'xss';
 import { prisma } from '../config/prisma';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/AppError';
@@ -13,8 +14,10 @@ export async function createEvent(
 ) {
   return prisma.event.create({
     data: {
-      ...data,
-      dateTime: new Date(data.dateTime),
+      title:       xss(data.title),
+      description: xss(data.description),
+      dateTime:    new Date(data.dateTime),
+      capacity:    data.capacity,
       organizerId,
     },
     include: {

@@ -57,8 +57,8 @@ export const deleteAnyEvent = async (
     next: NextFunction
 ) => {
     try {
-        await adminService.deleteEventById(req.params.id as any);
-        res.json({ message: 'Event deleted successfully.' });
+        await adminService.deleteAnyEvent(req.params.id as string);
+        res.status(204).send();
     } catch (e) {
         next(e);
     }

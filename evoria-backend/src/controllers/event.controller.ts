@@ -26,8 +26,13 @@ export const listEvents = async (req: Request, res: Response, next: NextFunction
 };
 
 // Placeholder — implement in GET /events/:id task
-export const getEvent = async (_req: Request, _res: Response, next: NextFunction) => {
-  next();
+export const getEvent = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const event = await eventService.getEventById(req.params.id);
+    res.json({ event });
+  } catch (e) {
+    next(e);
+  }
 };
 
 // Placeholder — implement in PUT /events/:id task

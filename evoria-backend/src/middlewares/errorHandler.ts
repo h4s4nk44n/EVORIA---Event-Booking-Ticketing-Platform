@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../utils/AppError';
+import { logger } from '../utils/logger';
 
 export function errorHandler(
   err: unknown,
@@ -9,6 +10,7 @@ export function errorHandler(
   _next: NextFunction
 ) {
   if (err instanceof AppError) {
+    logger.error({ message: err.message, stack: err.stack });
     return res.status(err.statusCode).json({
       error: err.message,
       ...(err.errors && { errors: err.errors }),
@@ -33,7 +35,7 @@ export function errorHandler(
     });
   }
 
-  console.error('[Unhandled Error]', err);
+  logger.error('Unhandled error', { error: err, stack: err instanceof Error ? err.stack : undefined });
 
   return res.status(500).json({
     error: 'Internal server error.',

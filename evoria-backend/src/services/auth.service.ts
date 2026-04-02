@@ -1,3 +1,4 @@
+import xss from 'xss';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
@@ -14,7 +15,7 @@ export async function registerUser(data: {
 
   // Prisma throws P2002 on duplicate email → errorHandler returns 409 automatically
   const user = await prisma.user.create({
-    data: { ...data, password: hashed },
+    data: { ...data, name: xss(data.name), password: hashed },
     select: {
       id:        true,
       name:      true,

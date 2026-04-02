@@ -25,10 +25,9 @@ export const listEvents = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-// Placeholder — implement in GET /events/:id task
 export const getEvent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const event = await eventService.getEventById(req.params.id);
+    const event = await eventService.getEventById(req.params.id as string);
     res.json({ event });
   } catch (e) {
     next(e);

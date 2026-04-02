@@ -8,7 +8,7 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest",
+    "test": "jest --verbose",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "winston": "^3.19.0",
+    "xss": "^1.0.15",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -45,12 +46,11 @@
     "prettier": "^3.8.1",
     "prisma": "^6.6.0",
     "supertest": "^7.2.2",
-    "ts-jest": "^29.4.6",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

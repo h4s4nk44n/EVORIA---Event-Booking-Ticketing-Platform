@@ -78,8 +78,16 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
 // Placeholder — implement in GET /events/:id/attendees task
 export const getAttendees = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // TODO: implement
-    next();
+    const page  = Math.max(1, Number(req.query.page)  || 1);
+    const limit = Math.min(50, Number(req.query.limit) || 10);
+ 
+    const result = await eventService.getEventAttendees(
+      req.user.userId,
+      req.params.id as string,
+      page,
+      limit
+    );
+    res.json(result);
   } catch (e) {
     next(e);
   }

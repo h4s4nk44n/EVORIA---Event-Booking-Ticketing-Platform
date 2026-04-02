@@ -62,3 +62,25 @@ export const deleteEvent = async (req: Request, res: Response, next: NextFunctio
     next(e);
   }
 };
+
+export const getStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const stats = await eventService.getEventStats(
+      req.user.userId,
+      req.params.id as string
+    );
+    res.json(stats);
+  } catch (e) {
+    next(e);
+  }
+};
+
+// Placeholder — implement in GET /events/:id/attendees task
+export const getAttendees = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // TODO: implement
+    next();
+  } catch (e) {
+    next(e);
+  }
+};

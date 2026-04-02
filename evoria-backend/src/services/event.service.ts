@@ -149,3 +149,21 @@ export async function deleteEvent(organizerId: string, eventId: string) {
   // Not: Bookings cascade-delete özelliği Prisma şemasında (schema.prisma) 
   // 'onDelete: Cascade' ile ayarlandığı için burada manuel booking silmeye gerek yok.
 }
+
+export async function getEventStats(organizerId: string, eventId: string) {
+  const event = await prisma.event.findUnique({
+    where: { id: eventId },
+    include: { _count: { select: { bookings: true } } }
+  });
+
+  if (!event) throw new AppError('Event not found', 404);
+  if (event.organizerId !== organizerId) throw new AppError('Forbidden', 403);
+
+  return {
+    eventId: event.id,
+    title: event.title,
+    capacity: event.capacity,
+    ticketsSold: event._count.bookings,
+    ticketsRemaining: event.capacity - event._count.bookings,
+  };
+}

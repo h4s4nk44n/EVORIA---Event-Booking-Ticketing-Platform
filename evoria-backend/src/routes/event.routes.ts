@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validation'; // Senin middleware'in
-import { createEvent, updateEvent, listEvents, getEvent, deleteEvent } from '../controllers/event.controller';
+import { createEvent, updateEvent, listEvents, getEvent, deleteEvent, getStats, getAttendees} from '../controllers/event.controller';
 
 // Yeni validator'ları import ediyoruz!
 import { createEventSchema, updateEventSchema } from '../middlewares/event.validators';
@@ -12,6 +12,8 @@ const router = Router();
 // Public routes — no auth required
 router.get('/',    listEvents);
 router.get('/:id', getEvent);
+router.get('/:id/stats', authenticate, authorize('ORGANIZER'), getStats);
+router.get('/:id/attendees', authenticate, authorize('ORGANIZER'), getAttendees);
 
 // Protected routes (Şemaları middleware'e pasladık)
 router.post('/', authenticate, authorize('ORGANIZER'), validate(createEventSchema), createEvent);

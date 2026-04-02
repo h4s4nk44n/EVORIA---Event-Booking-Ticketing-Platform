@@ -3,7 +3,12 @@ import { AppError } from '../utils/AppError';
 
 export async function createBooking(userId: string, eventId: string) {
   return await prisma.$transaction(async (tx) => {
-    const event = await tx.event.findUnique({ where: { id: eventId } });
+    // Lock the event row (SELECT ... FOR UPDATE) to serialise concurrent bookings
+    const rows = await tx.$queryRaw<
+      { id: string; capacity: number }[]
+    >`SELECT id, capacity FROM events WHERE id = ${eventId} FOR UPDATE`;
+
+    const event = rows[0];
     if (!event) throw new AppError('Event not found', 404);
 
     const existingBooking = await tx.booking.findUnique({

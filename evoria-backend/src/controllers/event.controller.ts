@@ -51,8 +51,13 @@ export const updateEvent = async (req: Request, res: Response, next: NextFunctio
 // Placeholder — implement in DELETE /events/:id task
 export const deleteEvent = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // TODO: implement
-    next();
+    await eventService.deleteEvent(
+      req.user.userId, 
+      req.params.id as string // PUCUK4D yerine doğru parametreyi koyduk
+    );
+    
+    // Silme işlemi başarılı olduğunda 204 (No Content) dönülür
+    res.status(204).send();
   } catch (e) {
     next(e);
   }

@@ -9,6 +9,7 @@ describe('Logger', () => {
   });
 
   function loadLogger() {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require('./logger').logger as winston.Logger;
   }
 

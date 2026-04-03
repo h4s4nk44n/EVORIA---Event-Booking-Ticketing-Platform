@@ -30,7 +30,7 @@ let attendeeToken: string;
 beforeAll(async () => {
   const res = await request(app).post('/auth/register').send({
     name:     'Test Organizer',
-    email:    'organizer@test-events.com',
+    email:    'organizer@test-create.com',
     password: 'Test1234!',
     role:     'ORGANIZER',
   });
@@ -42,12 +42,12 @@ beforeAll(async () => {
 // Test sonrası temizlik
 afterAll(async () => {
   const users = await prisma.user.findMany({
-    where: { email: { contains: '@test-events.com' } },
+    where: { email: { contains: '@test-create.com' } },
     select: { id: true },
   });
   const userIds = users.map(u => u.id);
   await prisma.event.deleteMany({ where: { organizerId: { in: userIds } } });
-  await prisma.user.deleteMany({ where: { email: { contains: '@test-events.com' } } });
+  await prisma.user.deleteMany({ where: { email: { contains: '@test-create.com' } } });
   await prisma.$disconnect();
 });
 

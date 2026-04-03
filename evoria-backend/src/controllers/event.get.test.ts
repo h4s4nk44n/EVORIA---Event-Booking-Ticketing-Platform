@@ -14,7 +14,7 @@ function makeToken(role: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN', userId: string) {
 
 let organizerId: string;
 let attendeeId: string;
-let attendeeToken: string;
+let _attendeeToken: string;
 let eventId: string;
 
 beforeAll(async () => {
@@ -33,7 +33,7 @@ beforeAll(async () => {
     role: 'ATTENDEE',
   });
   attendeeId = attRes.body.user.id;
-  attendeeToken = makeToken('ATTENDEE', attendeeId);
+  _attendeeToken = makeToken('ATTENDEE', attendeeId);
 
   const d = new Date();
   d.setDate(d.getDate() + 30);

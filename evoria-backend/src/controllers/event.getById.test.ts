@@ -25,7 +25,7 @@ let eventId: string;
 beforeAll(async () => {
   const res = await request(app).post('/auth/register').send({
     name:     'GetEvent Organizer',
-    email:    'getevent@test-events.com',
+    email:    'getevent@test-getbyid.com',
     password: 'Test1234!',
     role:     'ORGANIZER',
   });
@@ -46,12 +46,12 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const users = await prisma.user.findMany({
-    where: { email: { contains: '@test-events.com' } },
+    where: { email: { contains: '@test-getbyid.com' } },
     select: { id: true },
   });
   const userIds = users.map(u => u.id);
   await prisma.event.deleteMany({ where: { organizerId: { in: userIds } } });
-  await prisma.user.deleteMany({ where: { email: { contains: '@test-events.com' } } });
+  await prisma.user.deleteMany({ where: { email: { contains: '@test-getbyid.com' } } });
   await prisma.$disconnect();
 });
 

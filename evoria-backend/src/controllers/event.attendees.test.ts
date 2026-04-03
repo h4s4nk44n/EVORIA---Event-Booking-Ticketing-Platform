@@ -23,7 +23,7 @@ let organizer2Id: string;
 let attendeeId: string;
 let organizer1Token: string;
 let organizer2Token: string;
-let attendeeToken: string;
+let _attendeeToken: string;
 let eventId: string;
 
 beforeAll(async () => {
@@ -49,7 +49,7 @@ beforeAll(async () => {
     password: 'Test1234!', role: 'ATTENDEE',
   });
   attendeeId    = res3.body.user.id;
-  attendeeToken = makeToken('ATTENDEE', attendeeId);
+  _attendeeToken = makeToken('ATTENDEE', attendeeId);
 
   // Organizer 1'e ait event oluştur
   const eventRes = await request(app)

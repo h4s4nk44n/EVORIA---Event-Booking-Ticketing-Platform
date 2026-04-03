@@ -29,7 +29,7 @@ let bookingId: string;
 beforeAll(async () => {
   // 1. Organizer 1 oluştur
   const res1 = await request(app).post('/auth/register').send({
-    name: 'Delete Org 1', email: 'deleteorg1@test-events.com',
+    name: 'Delete Org 1', email: 'deleteorg1@test-delete.com',
     password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer1Id = res1.body.user.id;
@@ -37,7 +37,7 @@ beforeAll(async () => {
 
   // 2. Organizer 2 oluştur (403 testi için)
   const res2 = await request(app).post('/auth/register').send({
-    name: 'Delete Org 2', email: 'deleteorg2@test-events.com',
+    name: 'Delete Org 2', email: 'deleteorg2@test-delete.com',
     password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer2Id = res2.body.user.id;
@@ -45,7 +45,7 @@ beforeAll(async () => {
 
   // 3. Bir Attendee (Katılımcı) oluştur (Booking testi için)
   const res3 = await request(app).post('/auth/register').send({
-    name: 'Delete Attendee', email: 'deleteattendee@test-events.com',
+    name: 'Delete Attendee', email: 'deleteattendee@test-delete.com',
     password: 'Test1234!', role: 'ATTENDEE',
   });
   attendeeId = res3.body.user.id;

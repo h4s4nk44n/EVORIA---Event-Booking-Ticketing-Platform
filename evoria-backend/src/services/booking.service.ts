@@ -1,15 +1,19 @@
 import { prisma } from '../config/prisma';
 import { AppError } from '../utils/AppError';
 
-export async function createBooking(userId: string, eventId: string) {
+export async function createBooking(userId: string, eventId: string, ticketId?: string) {
   return await prisma.$transaction(async (tx) => {
     // Lock the event row (SELECT ... FOR UPDATE) to serialise concurrent bookings
     const rows = await tx.$queryRaw<
-      { id: string; capacity: number }[]
-    >`SELECT id, capacity FROM events WHERE id = ${eventId} FOR UPDATE`;
+      { id: string; capacity: number; dateTime: Date }[]
+    >`SELECT id, capacity, "dateTime" FROM events WHERE id = ${eventId} FOR UPDATE`;
 
     const event = rows[0];
     if (!event) throw new AppError('Event not found', 404);
+
+    if (new Date(event.dateTime) <= new Date()) {
+      throw new AppError('Cannot book a past event', 422);
+    }
 
     const existingBooking = await tx.booking.findUnique({
       where: { userId_eventId: { userId, eventId } },
@@ -23,11 +27,29 @@ export async function createBooking(userId: string, eventId: string) {
       throw new AppError('This event is fully booked', 422);
     }
 
+    // If a ticket type is specified, verify availability
+    if (ticketId) {
+      const ticketRows = await tx.$queryRaw<
+        { id: string; quantity: number; eventId: string }[]
+      >`SELECT id, quantity, "eventId" FROM tickets WHERE id = ${ticketId} FOR UPDATE`;
+
+      const ticket = ticketRows[0];
+      if (!ticket || ticket.eventId !== eventId) {
+        throw new AppError('Ticket type not found for this event', 404);
+      }
+
+      const ticketBookedCount = await tx.booking.count({ where: { ticketId } });
+      if (ticketBookedCount >= ticket.quantity) {
+        throw new AppError('This ticket type is sold out', 422);
+      }
+    }
+
     return tx.booking.create({
-      data: { userId, eventId },
+      data: { userId, eventId, ticketId },
       include: {
-        event: { select: { id: true, title: true, dateTime: true } },
-        user: { select: { id: true, name: true, email: true } },
+        event:  { select: { id: true, title: true, dateTime: true } },
+        user:   { select: { id: true, name: true, email: true } },
+        ticket: { select: { id: true, type: true, price: true } },
       },
     });
   });

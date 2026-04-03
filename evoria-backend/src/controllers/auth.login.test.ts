@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 const testUser = {
   name:     'Login Test User',
   email:    'user@test-login.com',
-  password: '12345678',
+  password: 'Test1234!',
   role:     'ATTENDEE' as const,
 };
 

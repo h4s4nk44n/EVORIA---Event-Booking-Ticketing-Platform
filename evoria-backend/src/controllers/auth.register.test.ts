@@ -19,7 +19,7 @@ afterAll(async () => {
 const validBody = {
   name:     'Test User',
   email:    'user@test-register.com',
-  password: '12345678',
+  password: 'Test1234!',
   role:     'ATTENDEE',
 };
 

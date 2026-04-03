@@ -28,7 +28,7 @@ beforeAll(async () => {
   const orgRes = await request(app).post('/auth/register').send({
     name: 'Concurrency Test Organizer',
     email: 'organizer@test-concurrency.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ORGANIZER',
   });
   organizerId = orgRes.body.user.id;
@@ -55,7 +55,7 @@ async function createAttendee(index: number) {
   const res = await request(app).post('/auth/register').send({
     name: `Concurrency Attendee ${index}`,
     email: `attendee${index}@test-concurrency.com`,
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ATTENDEE',
   });
   const id = res.body.user.id;

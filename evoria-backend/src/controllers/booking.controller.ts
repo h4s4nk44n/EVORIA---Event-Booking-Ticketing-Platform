@@ -5,7 +5,8 @@ export const book = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const booking = await bookingService.createBooking(
       req.user.userId,
-      req.body.eventId
+      req.body.eventId,
+      req.body.ticketId
     );
     res.status(201).json({ booking });
   } catch (e) {

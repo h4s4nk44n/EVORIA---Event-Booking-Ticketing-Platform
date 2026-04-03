@@ -19,7 +19,7 @@ beforeAll(async () => {
   const orgRes = await request(app).post('/auth/register').send({
     name: 'XSS Test Organizer',
     email: 'organizer@test-xss.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ORGANIZER',
   });
   organizerId = orgRes.body.user.id;
@@ -113,7 +113,7 @@ describe('XSS sanitization — user registration', () => {
     const res = await request(app).post('/auth/register').send({
       name: '<script>alert("xss")</script>John',
       email: 'xss-name@test-xss.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
 
@@ -126,7 +126,7 @@ describe('XSS sanitization — user registration', () => {
     const res = await request(app).post('/auth/register').send({
       name: 'Jane Doe',
       email: 'normal-name@test-xss.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
 

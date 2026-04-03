@@ -9,6 +9,8 @@ export const createEventSchema = z.object({
                   .refine(d => new Date(d) > new Date(), { message: 'Must be a future date' }),
     capacity:    z.number({ message: 'Capacity must be a number' })
                   .int().min(1).max(100000),
+    categoryId:  z.string().optional(),
+    venueId:     z.string().optional(),
   })
 });
 

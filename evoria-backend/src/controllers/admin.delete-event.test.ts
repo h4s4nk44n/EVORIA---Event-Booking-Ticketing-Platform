@@ -22,7 +22,7 @@ beforeAll(async () => {
   const adminRes = await request(app).post('/auth/register').send({
     name: 'Admin Delete Test',
     email: 'admin@test-admin-del.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ATTENDEE', // register as ATTENDEE, then promote
   });
   adminId = adminRes.body.user.id;
@@ -38,7 +38,7 @@ beforeAll(async () => {
   const orgRes = await request(app).post('/auth/register').send({
     name: 'Organizer Delete Test',
     email: 'organizer@test-admin-del.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ORGANIZER',
   });
   organizerId = orgRes.body.user.id;

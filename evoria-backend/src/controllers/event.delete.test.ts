@@ -30,7 +30,7 @@ beforeAll(async () => {
   // 1. Organizer 1 oluştur
   const res1 = await request(app).post('/auth/register').send({
     name: 'Delete Org 1', email: 'deleteorg1@test-events.com',
-    password: 'password123', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer1Id = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
@@ -38,7 +38,7 @@ beforeAll(async () => {
   // 2. Organizer 2 oluştur (403 testi için)
   const res2 = await request(app).post('/auth/register').send({
     name: 'Delete Org 2', email: 'deleteorg2@test-events.com',
-    password: 'password123', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer2Id = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);
@@ -46,7 +46,7 @@ beforeAll(async () => {
   // 3. Bir Attendee (Katılımcı) oluştur (Booking testi için)
   const res3 = await request(app).post('/auth/register').send({
     name: 'Delete Attendee', email: 'deleteattendee@test-events.com',
-    password: 'password123', role: 'ATTENDEE',
+    password: 'Test1234!', role: 'ATTENDEE',
   });
   attendeeId = res3.body.user.id;
 

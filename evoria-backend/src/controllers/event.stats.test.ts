@@ -28,7 +28,7 @@ beforeAll(async () => {
   // 1. Organizer 1 (Owner) oluştur
   const res1 = await request(app).post('/auth/register').send({
     name: 'Stats Org 1', email: 'statsorg1@test-events.com',
-    password: 'password123', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer1Id = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
@@ -36,7 +36,7 @@ beforeAll(async () => {
   // 2. Organizer 2 (Other) oluştur
   const res2 = await request(app).post('/auth/register').send({
     name: 'Stats Org 2', email: 'statsorg2@test-events.com',
-    password: 'password123', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer2Id = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);

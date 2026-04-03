@@ -31,7 +31,7 @@ beforeAll(async () => {
   const res = await request(app).post('/auth/register').send({
     name:     'Test Organizer',
     email:    'organizer@test-events.com',
-    password: '12345678',
+    password: 'Test1234!',
     role:     'ORGANIZER',
   });
   organizerId = res.body.user.id;

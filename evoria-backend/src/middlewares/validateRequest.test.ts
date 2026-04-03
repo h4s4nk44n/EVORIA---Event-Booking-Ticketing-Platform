@@ -62,7 +62,7 @@ describe('validateRequest middleware', () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'bu-email-degil',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
 
@@ -77,7 +77,7 @@ describe('validateRequest middleware', () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'ali@test.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ADMIN', // enum dışı
     });
 
@@ -91,7 +91,7 @@ describe('validateRequest middleware', () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'ali@test.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
 
@@ -105,7 +105,7 @@ describe('validateRequest middleware', () => {
     const res = await request(app).post('/test').send({
       name: 'A', // min 2
       email: 'ali@test.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
 

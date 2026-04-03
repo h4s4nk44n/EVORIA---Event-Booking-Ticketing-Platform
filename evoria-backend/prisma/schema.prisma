@@ -13,6 +13,12 @@ enum Role {
   ADMIN
 }
 
+enum TicketType {
+  GENERAL
+  VIP
+  EARLY_BIRD
+}
+
 model User {
   id        String    @id @default(cuid())
   name      String
@@ -40,6 +46,13 @@ model Event {
   organizerId String
   organizer   User      @relation("OrganizerEvents", fields: [organizerId], references: [id])
 
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  venueId     String?
+  venue       Venue?    @relation(fields: [venueId], references: [id])
+
+  tickets     Ticket[]
   bookings    Booking[]
 
   @@map("events")
@@ -52,9 +65,48 @@ model Booking {
   userId    String
   eventId   String
 
+  ticketId  String?
+  ticket    Ticket?   @relation(fields: [ticketId], references: [id])
+
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("bookings")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  events      Event[]
+
+  @@map("categories")
+}
+
+model Venue {
+  id       String @id @default(cuid())
+  name     String
+  address  String
+  city     String
+  capacity Int
+
+  events   Event[]
+
+  @@map("venues")
+}
+
+model Ticket {
+  id       String     @id @default(cuid())
+  type     TicketType
+  price    Float
+  quantity Int
+
+  eventId  String
+  event    Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@map("tickets")
 }

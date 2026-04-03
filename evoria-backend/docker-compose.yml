@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: evoria
+      POSTGRES_PASSWORD: evoria123
+      POSTGRES_DB: evoria
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://evoria:evoria123@db:5432/evoria
+      JWT_SECRET: super-secret-jwt-key-change-in-production-min32chars
+      PORT: "3000"
+      NODE_ENV: production
+      ALLOWED_ORIGIN: http://localhost:3001
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

@@ -10,6 +10,8 @@ export async function createEvent(
     description: string;
     dateTime:    string;
     capacity:    number;
+    categoryId?: string;
+    venueId?:    string;
   }
 ) {
   return prisma.event.create({
@@ -19,38 +21,45 @@ export async function createEvent(
       dateTime:    new Date(data.dateTime),
       capacity:    data.capacity,
       organizerId,
+      categoryId:  data.categoryId,
+      venueId:     data.venueId,
     },
     include: {
-      organizer: {
-        select: { id: true, name: true },
-      },
+      organizer: { select: { id: true, name: true } },
+      category:  true,
+      venue:     true,
     },
   });
 }
 
 export async function listEvents(query: {
-  search?: string;
-  from?:   string;
-  to?:     string;
-  page?:   number;
-  limit?:  number;
+  search?:     string;
+  from?:       string;
+  to?:         string;
+  categoryId?: string;
+  venueId?:    string;
+  page?:       number;
+  limit?:      number;
 }) {
   const page  = Math.max(1, query.page  || 1);
   const limit = Math.min(50, query.limit || 10);
   const skip  = (page - 1) * limit;
- 
+
   const where: Prisma.EventWhereInput = {};
- 
+
   if (query.search) {
     where.title = { contains: query.search, mode: 'insensitive' };
   }
- 
+
   if (query.from || query.to) {
     where.dateTime = {};
     if (query.from) where.dateTime.gte = new Date(query.from);
     if (query.to)   where.dateTime.lte = new Date(query.to);
   }
- 
+
+  if (query.categoryId) where.categoryId = query.categoryId;
+  if (query.venueId)    where.venueId = query.venueId;
+
   const [events, total] = await prisma.$transaction([
     prisma.event.findMany({
       where,
@@ -59,12 +68,14 @@ export async function listEvents(query: {
       orderBy: { dateTime: 'asc' },
       include: {
         organizer: { select: { id: true, name: true } },
+        category:  true,
+        venue:     true,
         _count:    { select: { bookings: true } },
       },
     }),
     prisma.event.count({ where }),
   ]);
- 
+
   const data = events.map(e => ({
     id: e.id,
     title: e.title,
@@ -72,10 +83,12 @@ export async function listEvents(query: {
     dateTime: e.dateTime,
     capacity: e.capacity,
     organizer: e.organizer,
+    category: e.category,
+    venue: e.venue,
     bookedCount: e._count.bookings,
     availableSpots: e.capacity - e._count.bookings,
   }));
- 
+
   return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
@@ -84,7 +97,10 @@ export async function getEventById(id: string) {
     where: { id },
     include: {
       organizer: { select: { id: true, name: true } },
-      _count: { select: { bookings: true } },
+      category:  true,
+      venue:     true,
+      tickets:   { include: { _count: { select: { bookings: true } } } },
+      _count:    { select: { bookings: true } },
     },
   });
 
@@ -97,6 +113,9 @@ export async function getEventById(id: string) {
     dateTime: event.dateTime,
     capacity: event.capacity,
     organizer: event.organizer,
+    category: event.category,
+    venue: event.venue,
+    tickets: event.tickets,
     bookedCount: event._count.bookings,
     availableSpots: event.capacity - event._count.bookings,
   };

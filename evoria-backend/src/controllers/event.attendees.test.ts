@@ -30,7 +30,7 @@ beforeAll(async () => {
   // Organizer 1 oluştur
   const res1 = await request(app).post('/auth/register').send({
     name: 'Attendees Org 1', email: 'attendeesorg1@test-attendees.com',
-    password: '12345678', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer1Id    = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
@@ -38,7 +38,7 @@ beforeAll(async () => {
   // Organizer 2 oluştur
   const res2 = await request(app).post('/auth/register').send({
     name: 'Attendees Org 2', email: 'attendeesorg2@test-attendees.com',
-    password: '12345678', role: 'ORGANIZER',
+    password: 'Test1234!', role: 'ORGANIZER',
   });
   organizer2Id    = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);
@@ -46,7 +46,7 @@ beforeAll(async () => {
   // Attendee oluştur
   const res3 = await request(app).post('/auth/register').send({
     name: 'Test Attendee', email: 'attendee@test-attendees.com',
-    password: '12345678', role: 'ATTENDEE',
+    password: 'Test1234!', role: 'ATTENDEE',
   });
   attendeeId    = res3.body.user.id;
   attendeeToken = makeToken('ATTENDEE', attendeeId);

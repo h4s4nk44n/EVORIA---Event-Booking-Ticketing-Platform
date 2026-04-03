@@ -21,7 +21,7 @@ beforeAll(async () => {
   const orgRes = await request(app).post('/auth/register').send({
     name: 'Event Get Test Organizer',
     email: 'organizer@test-event-get.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ORGANIZER',
   });
   organizerId = orgRes.body.user.id;
@@ -29,7 +29,7 @@ beforeAll(async () => {
   const attRes = await request(app).post('/auth/register').send({
     name: 'Event Get Test Attendee',
     email: 'attendee@test-event-get.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ATTENDEE',
   });
   attendeeId = attRes.body.user.id;

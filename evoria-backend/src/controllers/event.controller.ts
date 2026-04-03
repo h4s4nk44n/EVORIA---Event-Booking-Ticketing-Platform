@@ -13,11 +13,13 @@ export const createEvent = async (req: Request, res: Response, next: NextFunctio
 export const listEvents = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await eventService.listEvents({
-      search: req.query.search as string,
-      from:   req.query.from   as string,
-      to:     req.query.to     as string,
-      page:   Number(req.query.page)  || undefined,
-      limit:  Number(req.query.limit) || undefined,
+      search:     req.query.search     as string,
+      from:       req.query.from       as string,
+      to:         req.query.to         as string,
+      categoryId: req.query.categoryId as string,
+      venueId:    req.query.venueId    as string,
+      page:       Number(req.query.page)  || undefined,
+      limit:      Number(req.query.limit) || undefined,
     });
     res.json(result);
   } catch (e) {

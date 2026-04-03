@@ -32,7 +32,7 @@ beforeAll(async () => {
   const orgRes = await request(app).post('/auth/register').send({
     name: 'Booking Test Organizer',
     email: 'organizer@test-booking.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ORGANIZER',
   });
   organizerId = orgRes.body.user.id;
@@ -42,7 +42,7 @@ beforeAll(async () => {
   const attRes = await request(app).post('/auth/register').send({
     name: 'Booking Test Attendee',
     email: 'attendee1@test-booking.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ATTENDEE',
   });
   attendeeId = attRes.body.user.id;
@@ -52,7 +52,7 @@ beforeAll(async () => {
   const att2Res = await request(app).post('/auth/register').send({
     name: 'Booking Test Attendee 2',
     email: 'attendee2@test-booking.com',
-    password: '12345678',
+    password: 'Test1234!',
     role: 'ATTENDEE',
   });
   secondAttendeeId = att2Res.body.user.id;
@@ -291,7 +291,7 @@ describe('GET /bookings/me', () => {
     const freshRes = await request(app).post('/auth/register').send({
       name: 'No Bookings Attendee',
       email: 'no-bookings@test-booking.com',
-      password: '12345678',
+      password: 'Test1234!',
       role: 'ATTENDEE',
     });
     const freshId = freshRes.body.user.id;

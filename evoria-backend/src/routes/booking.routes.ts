@@ -11,7 +11,10 @@ import {
 import { z } from 'zod';
 
 const router = Router();
-const bookSchema = z.object({ eventId: z.string().min(1) });
+const bookSchema = z.object({
+  eventId:  z.string().min(1),
+  ticketId: z.string().optional(),
+});
 
 router.post('/', bookingLimiter, authenticate, authorize('ATTENDEE'), validateRequest(bookSchema), book);
 router.delete('/:id', authenticate, authorize('ATTENDEE'), cancelBooking);

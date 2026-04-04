@@ -12,12 +12,12 @@ const testUser = {
   role:     'ATTENDEE' as const,
 };
 
-// Her test öncesinde temiz bir kullanıcı oluştur
+// Before every test, we create a fresh user
 beforeEach(async () => {
   await request(app).post('/auth/register').send(testUser);
 });
 
-// Her test sonrasında kullanıcıyı temizle
+// After each test, we clean up the user
 afterEach(async () => {
   await prisma.user.deleteMany({
     where: { email: { contains: '@test-login.com' } },
@@ -30,8 +30,8 @@ afterAll(async () => {
 
 describe('POST /auth/login', () => {
 
-  // 1. Doğru credentials → 200 ve { token, user } dönmeli
-  it('doğru credentials ile 200 ve token + user döner', async () => {
+  // 1. Correct credentials should return 200 and { token, user }
+  it('Correct credentials should return 200 and token + user', async () => {
     const res = await request(app).post('/auth/login').send({
       email:    testUser.email,
       password: testUser.password,
@@ -42,8 +42,8 @@ describe('POST /auth/login', () => {
     expect(res.body.user).toBeDefined();
   });
 
-  // 2. Response'da password olmamalı
-  it("response'da password field'ı bulunmaz", async () => {
+  // 2. There shouldn't be a password field in the response user object
+  it("There shouldn't be a password field in the response user object", async () => {
     const res = await request(app).post('/auth/login').send({
       email:    testUser.email,
       password: testUser.password,
@@ -53,8 +53,8 @@ describe('POST /auth/login', () => {
     expect(res.body.user.password).toBeUndefined();
   });
 
-  // 3. User objesi doğru field'ları içermeli
-  it('user objesi id, name, email, role içerir', async () => {
+  // 3. User object should contain id, name, email, role fields
+  it('user object should contain id, name, email, role fields', async () => {
     const res = await request(app).post('/auth/login').send({
       email:    testUser.email,
       password: testUser.password,
@@ -66,8 +66,8 @@ describe('POST /auth/login', () => {
     expect(res.body.user).toHaveProperty('role');
   });
 
-  // 4. JWT payload doğru field'ları içermeli
-  it('JWT payload userId, email, role, iat, exp içerir', async () => {
+  // 4. JWT payload should containt correct fields
+  it('JWT payload should contain correct fields', async () => {
     const res = await request(app).post('/auth/login').send({
       email:    testUser.email,
       password: testUser.password,
@@ -81,21 +81,21 @@ describe('POST /auth/login', () => {
     expect(decoded).toHaveProperty('exp');
   });
 
-  // 5. Yanlış şifre → 401 ve 'Invalid credentials'
-  it("yanlış şifre ile 401 ve 'Invalid credentials' döner", async () => {
+  // 5. Wrong password → 401 and 'Invalid credentials'
+  it("wrong password with 401 and 'Invalid credentials' response", async () => {
     const res = await request(app).post('/auth/login').send({
       email:    testUser.email,
-      password: 'yanlis_sifre',
+      password: 'wrong_password',
     });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('Invalid credentials');
   });
 
-  // 6. Olmayan email → 401 ve aynı mesaj (user enumeration önlemi)
-  it("olmayan email ile 401 ve 'Invalid credentials' döner", async () => {
+  // 6. Non-existent email → 401 and same message (user enumeration prevention)
+  it("non-existent email with 401 and 'Invalid credentials' response", async () => {
     const res = await request(app).post('/auth/login').send({
-      email:    'yok@test-login.com',
+      email:    'non@test-login.com',
       password: testUser.password,
     });
 
@@ -103,18 +103,18 @@ describe('POST /auth/login', () => {
     expect(res.body.error).toBe('Invalid credentials');
   });
 
-  // 7. Eksik body → 400
-  it('body boş gönderilince 400 döner', async () => {
+  // 7. Missing body → 400
+  it('missing body with 400 response', async () => {
     const res = await request(app).post('/auth/login').send({});
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation failed');
   });
 
-  // 8. Geçersiz email formatı → 400
-  it('geçersiz email formatı 400 döner', async () => {
+  // 8. Invalid email format → 400
+  it('invalid email format with 400 response', async () => {
     const res = await request(app).post('/auth/login').send({
-      email:    'bu-email-degil',
+      email:    'it-is-not-an-email',
       password: testUser.password,
     });
 

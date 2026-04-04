@@ -36,7 +36,7 @@ export const getEvent = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// Placeholder — implement in PUT /events/:id task
+// Implemented in PUT /events/:id task
 export const updateEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
     const event = await eventService.updateEvent(
@@ -50,15 +50,15 @@ export const updateEvent = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
-// Placeholder — implement in DELETE /events/:id task
+// Implemented in DELETE /events/:id task
 export const deleteEvent = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await eventService.deleteEvent(
       req.user.userId, 
-      req.params.id as string // PUCUK4D yerine doğru parametreyi koyduk
+      req.params.id as string
     );
     
-    // Silme işlemi başarılı olduğunda 204 (No Content) dönülür
+    // If deletion is successful, return 204 (No Content)
     res.status(204).send();
   } catch (e) {
     next(e);
@@ -77,7 +77,7 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// Placeholder — implement in GET /events/:id/attendees task
+// Implemented in GET /events/:id/attendees task
 export const getAttendees = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page  = Math.max(1, Number(req.query.page)  || 1);

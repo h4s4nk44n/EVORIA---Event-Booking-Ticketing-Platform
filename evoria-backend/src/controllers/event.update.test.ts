@@ -25,7 +25,7 @@ let organizer2Token: string;
 let eventId: string;
 
 beforeAll(async () => {
-  // Organizer 1 oluştur
+  // Create organizer 1
   const res1 = await request(app).post('/auth/register').send({
     name: 'Update Organizer 1', email: 'updateorg1@test-update.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -33,7 +33,7 @@ beforeAll(async () => {
   organizer1Id    = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
 
-  // Organizer 2 oluştur
+  // Create organizer 2
   const res2 = await request(app).post('/auth/register').send({
     name: 'Update Organizer 2', email: 'updateorg2@test-update.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -41,7 +41,7 @@ beforeAll(async () => {
   organizer2Id    = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);
 
-  // Organizer 1'e ait bir event oluştur
+  // Create an event with organizer 1
   const eventRes = await request(app)
     .post('/events')
     .set('Authorization', `Bearer ${organizer1Token}`)
@@ -67,8 +67,8 @@ afterAll(async () => {
 
 describe('PUT /events/:id', () => {
 
-  // 1. Geçerli güncelleme → 200
-  it('owner ile geçerli güncelleme 200 ve güncellenmiş event döner', async () => {
+  // 1. Valid update → 200
+  it('with valid update it returns 200 and updated event', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .set('Authorization', `Bearer ${organizer1Token}`)
@@ -78,8 +78,8 @@ describe('PUT /events/:id', () => {
     expect(res.body.event.title).toBe('Updated Title');
   });
 
-  // 2. Partial update — sadece title güncellenmeli
-  it('sadece title gönderilince diğer alanlar değişmez', async () => {
+  // 2. Partial update — only title should be updated
+  it('with partial update only title is updated', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .set('Authorization', `Bearer ${organizer1Token}`)
@@ -87,11 +87,11 @@ describe('PUT /events/:id', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.event.title).toBe('Only Title Changed');
-    expect(res.body.event.capacity).toBe(50); // değişmemeli
+    expect(res.body.event.capacity).toBe(50); // It shouldn't be changed
   });
 
-  // 3. Farklı organizer → 403
-  it('farklı organizer ile 403 döner', async () => {
+  // 3. Different organizer → 403
+  it('with different organizer it returns 403', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .set('Authorization', `Bearer ${organizer2Token}`)
@@ -100,8 +100,8 @@ describe('PUT /events/:id', () => {
     expect(res.status).toBe(403);
   });
 
-  // 4. Olmayan event → 404
-  it('olmayan event ID ile 404 döner', async () => {
+  // 4. Non-existent event → 404
+  it('with non-existent event it returns 404', async () => {
     const res = await request(app)
       .put('/events/nonexistent-id')
       .set('Authorization', `Bearer ${organizer1Token}`)
@@ -110,8 +110,8 @@ describe('PUT /events/:id', () => {
     expect(res.status).toBe(404);
   });
 
-  // 5. Geçmiş tarih → 400
-  it('geçmiş dateTime ile 400 döner', async () => {
+  // 5. Past date → 400
+  it('with past dateTime it returns 400', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .set('Authorization', `Bearer ${organizer1Token}`)
@@ -120,8 +120,8 @@ describe('PUT /events/:id', () => {
     expect(res.status).toBe(400);
   });
 
-  // 6. Token yok → 401
-  it('token olmadan 401 döner', async () => {
+  // 6. No token → 401
+  it('with no token it returns 401', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .send({ title: 'No Token' });
@@ -129,16 +129,14 @@ describe('PUT /events/:id', () => {
     expect(res.status).toBe(401);
   });
 
-  // 7. Kapasite booking sayısının altına düşürülünce → 422
-  it('kapasite mevcut booking sayısının altına düşürülünce 422 döner', async () => {
-    // Önce kapasiteyi 1'e düşür — booking yoksa geçer
-    // Sonra kapasiteyi 0'a düşürmeye çalış → 400 (Zod validation)
+  // 7. Capacity reduced below current bookings → 422
+  it('when capacity is reduced below current bookings it returns 422', async () => {
     const res = await request(app)
       .put(`/events/${eventId}`)
       .set('Authorization', `Bearer ${organizer1Token}`)
       .send({ capacity: 0 });
 
-    expect(res.status).toBe(400); // Zod min(1) engeller
+    expect(res.status).toBe(400);
   });
 
 });

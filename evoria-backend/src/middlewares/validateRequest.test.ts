@@ -5,7 +5,7 @@ import request from 'supertest';
 import { z } from 'zod';
 import { validateRequest } from '../middlewares/validateRequest';
 
-// --- Test app kurulumu ---
+// --- Test app setup ---
 const app = express();
 app.use(express.json());
 
@@ -20,10 +20,10 @@ app.post('/test', validateRequest(testSchema), (req: Request, res: Response) => 
   res.status(200).json({ success: true, body: req.body });
 });
 
-// --- Testler ---
+// --- Tests ---
 describe('validateRequest middleware', () => {
 
-  // 1. Tüm alanlar eksikse 400 dönmeli
+  // 1. If all fields are missing it should return 400
   it('tüm alanlar eksikse 400 ve hata listesi döner', async () => {
     const res = await request(app).post('/test').send({});
 
@@ -33,7 +33,7 @@ describe('validateRequest middleware', () => {
     expect(res.body.errors.length).toBeGreaterThan(0);
   });
 
-  // 2. Hata formatı { field, message } şeklinde olmalı
+  // 2. Error format should be like -> { field, message } 
   it('hata nesneleri field ve message içerir', async () => {
     const res = await request(app).post('/test').send({});
 
@@ -43,12 +43,12 @@ describe('validateRequest middleware', () => {
     });
   });
 
-  // 3. Sadece bazı alanlar eksikse yine 400 dönmeli
+  // 3. If some fields are missing it should return 400
   it('bazı alanlar eksikse 400 döner', async () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'ali@test.com',
-      // password ve role eksik
+      // The password and role are missing
     });
 
     expect(res.status).toBe(400);
@@ -57,11 +57,11 @@ describe('validateRequest middleware', () => {
     expect(fields).toContain('role');
   });
 
-  // 4. Geçersiz email formatı hata vermeli
+  // 4. Invalid email format should return 400
   it('geçersiz email formatı 400 döner', async () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
-      email: 'bu-email-degil',
+      email: 'this-is-not-an-email',
       password: 'Test1234!',
       role: 'ATTENDEE',
     });
@@ -72,13 +72,13 @@ describe('validateRequest middleware', () => {
     expect(emailError.message).toBe('Invalid email format');
   });
 
-  // 5. Geçersiz role değeri hata vermeli
+  // 5. Invalid enum value for role should return 400
   it('geçersiz role değeri 400 döner', async () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'ali@test.com',
       password: 'Test1234!',
-      role: 'ADMIN', // enum dışı
+      role: 'ADMIN', // out of enum values
     });
 
     expect(res.status).toBe(400);
@@ -86,8 +86,8 @@ describe('validateRequest middleware', () => {
     expect(roleError).toBeDefined();
   });
 
-  // 6. Geçerli body 200 dönmeli ve controller'a geçmeli
-  it('geçerli body ile 200 döner ve body temiz gelir', async () => {
+  // 6. Valid body should return 200 and pass to controller
+  it('valid body returns 200 and passes to controller', async () => {
     const res = await request(app).post('/test').send({
       name: 'Ali',
       email: 'ali@test.com',
@@ -100,8 +100,8 @@ describe('validateRequest middleware', () => {
     expect(res.body.body.email).toBe('ali@test.com');
   });
 
-  // 7. Kısa isim (min 2 karakter kuralı)
-  it('çok kısa isim 400 döner', async () => {
+  // 7. Short name (min 2 character rule)
+  it('very short name returns 400', async () => {
     const res = await request(app).post('/test').send({
       name: 'A', // min 2
       email: 'ali@test.com',

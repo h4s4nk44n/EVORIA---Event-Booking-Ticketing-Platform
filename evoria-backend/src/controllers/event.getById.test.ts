@@ -57,46 +57,40 @@ afterAll(async () => {
 
 describe('GET /events/:id', () => {
 
-  // 1. Geçerli ID → 200 ve event döner
-  it('geçerli ID ile 200 ve event döner', async () => {
+  // 1. Valid ID → 200 and event returned
+  it('valid ID with 200 and event returned', async () => {
     const res = await request(app).get(`/events/${eventId}`);
-
     expect(res.status).toBe(200);
     expect(res.body.event).toBeDefined();
     expect(res.body.event.id).toBe(eventId);
   });
 
-  // 2. Event organizer bilgisi içermeli
-  it('event organizer id ve name içerir', async () => {
+  // 2. Event should include organizer info
+  it('event includes organizer id and name', async () => {
     const res = await request(app).get(`/events/${eventId}`);
-
     expect(res.status).toBe(200);
     expect(res.body.event.organizer).toBeDefined();
     expect(res.body.event.organizer.id).toBeDefined();
     expect(res.body.event.organizer.name).toBeDefined();
   });
 
-  // 3. bookedCount ve availableSpots içermeli
-  it('event bookedCount ve availableSpots içerir', async () => {
+  // 3. It should include bookedCount and availableSpots
+  it('event includes bookedCount and availableSpots', async () => {
     const res = await request(app).get(`/events/${eventId}`);
-
     expect(res.status).toBe(200);
     expect(res.body.event).toHaveProperty('bookedCount');
     expect(res.body.event).toHaveProperty('availableSpots');
   });
 
-  // 4. Token olmadan da çalışmalı — public endpoint
-  it('token olmadan da 200 döner', async () => {
+  // 4. It should be able to work without token — public endpoint
+  it('It can also returns 200 without token', async () => {
     const res = await request(app).get(`/events/${eventId}`);
-
     expect(res.status).toBe(200);
   });
 
-  // 5. Olmayan ID → 404
-  it('olmayan ID ile 404 döner', async () => {
+  // 5. Non-existent ID → 404
+  it('non-existent ID with 404', async () => {
     const res = await request(app).get('/events/nonexistent-id-12345');
-
     expect(res.status).toBe(404);
   });
-
 });

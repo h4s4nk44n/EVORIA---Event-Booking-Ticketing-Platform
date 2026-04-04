@@ -6,40 +6,40 @@ import { AppError } from '../utils/AppError';
 export async function createEvent(
   organizerId: string,
   data: {
-    title:       string;
+    title: string;
     description: string;
-    dateTime:    string;
-    capacity:    number;
+    dateTime: string;
+    capacity: number;
     categoryId?: string;
-    venueId?:    string;
+    venueId?: string;
   }
 ) {
   return prisma.event.create({
     data: {
-      title:       xss(data.title),
+      title: xss(data.title),
       description: xss(data.description),
-      dateTime:    new Date(data.dateTime),
-      capacity:    data.capacity,
+      dateTime: new Date(data.dateTime),
+      capacity: data.capacity,
       organizerId,
-      categoryId:  data.categoryId,
-      venueId:     data.venueId,
+      categoryId: data.categoryId,
+      venueId: data.venueId,
     },
     include: {
       organizer: { select: { id: true, name: true } },
-      category:  true,
-      venue:     true,
+      category: true,
+      venue: true,
     },
   });
 }
 
 export async function listEvents(query: {
-  search?:     string;
-  from?:       string;
-  to?:         string;
+  search?: string;
+  from?: string;
+  to?: string;
   categoryId?: string;
-  venueId?:    string;
-  page?:       number;
-  limit?:      number;
+  venueId?: string;
+  page?: number;
+  limit?: number;
 }) {
   const page  = Math.max(1, query.page  || 1);
   const limit = Math.min(50, query.limit || 10);
@@ -54,11 +54,11 @@ export async function listEvents(query: {
   if (query.from || query.to) {
     where.dateTime = {};
     if (query.from) where.dateTime.gte = new Date(query.from);
-    if (query.to)   where.dateTime.lte = new Date(query.to);
+    if (query.to) where.dateTime.lte = new Date(query.to);
   }
 
   if (query.categoryId) where.categoryId = query.categoryId;
-  if (query.venueId)    where.venueId = query.venueId;
+  if (query.venueId) where.venueId = query.venueId;
 
   const [events, total] = await prisma.$transaction([
     prisma.event.findMany({
@@ -68,9 +68,9 @@ export async function listEvents(query: {
       orderBy: { dateTime: 'asc' },
       include: {
         organizer: { select: { id: true, name: true } },
-        category:  true,
-        venue:     true,
-        _count:    { select: { bookings: true } },
+        category: true,
+        venue: true,
+        _count: { select: { bookings: true } },
       },
     }),
     prisma.event.count({ where }),
@@ -97,10 +97,10 @@ export async function getEventById(id: string) {
     where: { id },
     include: {
       organizer: { select: { id: true, name: true } },
-      category:  true,
-      venue:     true,
-      tickets:   { include: { _count: { select: { bookings: true } } } },
-      _count:    { select: { bookings: true } },
+      category: true,
+      venue: true,
+      tickets: { include: { _count: { select: { bookings: true } } } },
+      _count: { select: { bookings: true } },
     },
   });
 
@@ -125,17 +125,17 @@ export async function updateEvent(
   organizerId: string,
   eventId: string,
   data: Partial<{
-    title:       string;
+    title: string;
     description: string;
-    dateTime:    string;
-    capacity:    number;
+    dateTime: string;
+    capacity: number;
   }>
 ) {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) throw new AppError('Event not found', 404);
   if (event.organizerId !== organizerId) throw new AppError('Forbidden', 403);
  
-  // Kapasite düşürülüyorsa mevcut booking sayısının altına inemez
+  // If capacity is being updated, we check it's not less than current bookings
   if (data.capacity !== undefined) {
     const bookedCount = await prisma.booking.count({ where: { eventId } });
     if (data.capacity < bookedCount) {
@@ -150,9 +150,9 @@ export async function updateEvent(
     where: { id: eventId },
     data: {
       ...data,
-      ...(data.title       && { title:       xss(data.title) }),
+      ...(data.title && { title:       xss(data.title) }),
       ...(data.description && { description: xss(data.description) }),
-      ...(data.dateTime    && { dateTime:     new Date(data.dateTime) }),
+      ...(data.dateTime && { dateTime:     new Date(data.dateTime) }),
     },
   });
 }
@@ -165,8 +165,8 @@ export async function deleteEvent(organizerId: string, eventId: string) {
   
   await prisma.event.delete({ where: { id: eventId } });
   
-  // Not: Bookings cascade-delete özelliği Prisma şemasında (schema.prisma) 
-  // 'onDelete: Cascade' ile ayarlandığı için burada manuel booking silmeye gerek yok.
+  // Not: In prisma schema, bookings are set to cascade delete with 
+  // 'onDelete: Cascade', so we don't need to manually delete bookings here.
 }
 
 export async function getEventStats(organizerId: string, eventId: string) {
@@ -201,9 +201,9 @@ export async function getEventAttendees(
  
   const [bookings, total] = await prisma.$transaction([
     prisma.booking.findMany({
-      where:   { eventId },
+      where: { eventId },
       skip,
-      take:    limit,
+      take: limit,
       orderBy: { createdAt: 'asc' },
       include: {
         user: { select: { id: true, name: true, email: true } },
@@ -215,8 +215,8 @@ export async function getEventAttendees(
   return {
     data: bookings.map(b => ({
       bookingId: b.id,
-      bookedAt:  b.createdAt,
-      user:      b.user,
+      bookedAt: b.createdAt,
+      user: b.user,
     })),
     total,
     page,

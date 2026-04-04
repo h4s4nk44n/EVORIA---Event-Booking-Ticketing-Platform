@@ -6,7 +6,7 @@ import { prisma } from '../config/prisma';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 
-// Token üretici
+// Token generator function
 function makeToken(role: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN', userId: string) {
   return jwt.sign(
     { userId, email: 'test@example.com', role },
@@ -15,7 +15,7 @@ function makeToken(role: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN', userId: string) {
   );
 }
 
-// Gelecekte bir tarih
+// Future date generator function
 function futureDate(daysAhead = 7) {
   const d = new Date();
   d.setDate(d.getDate() + daysAhead);
@@ -26,7 +26,7 @@ let organizerId: string;
 let organizerToken: string;
 let attendeeToken: string;
 
-// Test öncesi bir organizer kullanıcı oluştur
+// Create an organizer user before tests
 beforeAll(async () => {
   const res = await request(app).post('/auth/register').send({
     name:     'Test Organizer',
@@ -39,7 +39,7 @@ beforeAll(async () => {
   attendeeToken  = makeToken('ATTENDEE', 'attendee-id');
 });
 
-// Test sonrası temizlik
+// Cleanup test users after all tests
 afterAll(async () => {
   const users = await prisma.user.findMany({
     where: { email: { contains: '@test-create.com' } },
@@ -60,8 +60,8 @@ const validBody = {
 
 describe('POST /events', () => {
 
-  // 1. ORGANIZER token ile geçerli body → 201
-  it('ORGANIZER token ile geçerli body 201 ve event döner', async () => {
+  // 1. ORGANIZER token and valid body → 201 
+  it('It returns ORGANIZER token and valid body (201)', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${organizerToken}`)
@@ -72,7 +72,7 @@ describe('POST /events', () => {
     expect(res.body.event.title).toBe(validBody.title);
   });
 
-  // 2. Response'da organizer bilgisi var mı
+  // 2. Is the organizer info included in the response event?
   it('response event içinde organizer id ve name içerir', async () => {
     const res = await request(app)
       .post('/events')
@@ -85,8 +85,8 @@ describe('POST /events', () => {
     expect(res.body.event.organizer.name).toBeDefined();
   });
 
-  // 3. organizerId body'den değil token'dan geliyor
-  it('organizerId token\'daki userId ile eşleşir', async () => {
+  // 3. organizerId comes from token, not body
+  it('organizerId matches with userId which is inside the token', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${organizerToken}`)
@@ -96,8 +96,8 @@ describe('POST /events', () => {
     expect(res.body.event.organizerId).toBe(organizerId);
   });
 
-  // 4. Geçmiş tarih → 400
-  it('geçmiş dateTime ile 400 döner', async () => {
+  // 4. Past date → 400 
+  it('past dateTime with 400', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${organizerToken}`)
@@ -107,7 +107,7 @@ describe('POST /events', () => {
   });
 
   // 5. capacity: 0 → 400
-  it('capacity 0 ile 400 döner', async () => {
+  it('capacity 0 returns 400', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${organizerToken}`)
@@ -116,8 +116,8 @@ describe('POST /events', () => {
     expect(res.status).toBe(400);
   });
 
-  // 6. Kısa title → 400
-  it('çok kısa title ile 400 döner', async () => {
+  // 6. Short title → 400
+  it('short title with 400', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${organizerToken}`)
@@ -127,7 +127,7 @@ describe('POST /events', () => {
   });
 
   // 7. ATTENDEE token → 403
-  it('ATTENDEE token ile 403 döner', async () => {
+  it('ATTENDEE token with 403', async () => {
     const res = await request(app)
       .post('/events')
       .set('Authorization', `Bearer ${attendeeToken}`)
@@ -136,8 +136,8 @@ describe('POST /events', () => {
     expect(res.status).toBe(403);
   });
 
-  // 8. Token yok → 401
-  it('token olmadan 401 döner', async () => {
+  // 8. No token → 401
+  it('No token with 401', async () => {
     const res = await request(app)
       .post('/events')
       .send(validBody);

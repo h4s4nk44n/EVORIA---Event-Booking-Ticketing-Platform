@@ -7,18 +7,18 @@ import { authenticate } from '../middlewares/auth';
 import { errorHandler } from '../middlewares/errorHandler';
 import { config } from '../config/env';
 
-// --- Test app kurulumu ---
+// --- Test app setup ---
 const app = express();
 app.use(express.json());
 
-// Korumalı test route'u
+// Protected test route
 app.get('/protected', authenticate, (req: Request, res: Response) => {
   res.json({ user: req.user });
 });
 
 app.use(errorHandler);
 
-// Geçerli bir token üretmek için yardımcı fonksiyon
+// Helper function to create a valid token
 function makeToken(payload: object, expiresIn: string | number = '7d') {
   return jwt.sign(payload, config.JWT_SECRET, { expiresIn } as any);
 }
@@ -31,8 +31,8 @@ const validPayload = {
 
 describe('authenticate middleware', () => {
 
-  // 1. Geçerli token → req.user populate edilmeli
-  it('geçerli token ile req.user populate edilir ve next() çağrılır', async () => {
+  // 1. valid token → req.user populate edilmeli
+  it('with valid token req.user is populated and next() is called', async () => {
     const token = makeToken(validPayload);
 
     const res = await request(app)
@@ -45,27 +45,27 @@ describe('authenticate middleware', () => {
     expect(res.body.user.role).toBe(validPayload.role);
   });
 
-  // 2. Authorization header eksik → 401
-  it('Authorization header olmadan 401 döner', async () => {
+  // 2. Authorization header is missing → 401
+  it('with no Authorization header it returns 401', async () => {
     const res = await request(app).get('/protected');
 
     expect(res.status).toBe(401);
   });
 
-  // 3. Bearer prefix'i olmadan → 401
-  it("'Bearer ' prefix'i olmayan token 401 döner", async () => {
+  // 3. Without Bearer prefix → 401
+  it("without 'Bearer ' prefix it returns 401", async () => {
     const token = makeToken(validPayload);
 
     const res = await request(app)
       .get('/protected')
-      .set('Authorization', token); // Bearer olmadan
+      .set('Authorization', token); // Without Bearer prefix
 
     expect(res.status).toBe(401);
   });
 
-  // 4. Süresi dolmuş token → 401
-  it('süresi dolmuş token 401 döner', async () => {
-    const token = makeToken(validPayload, -1); // geçmişte expire olmuş
+  // 4. Expired token → 401
+  it('with expired token it returns 401', async () => {
+    const token = makeToken(validPayload, -1); // expired token
 
     const res = await request(app)
       .get('/protected')
@@ -74,9 +74,9 @@ describe('authenticate middleware', () => {
     expect(res.status).toBe(401);
   });
 
-  // 5. Farklı secret ile imzalanmış token → 401
-  it('yanlış secret ile imzalanmış token 401 döner', async () => {
-    const token = jwt.sign(validPayload, 'yanlis_secret', { expiresIn: '7d' });
+  // 5. Token that is signed with a different secret → 401
+  it('with token signed with different secret it returns 401', async () => {
+    const token = jwt.sign(validPayload, 'wrong_secret', { expiresIn: '7d' });
 
     const res = await request(app)
       .get('/protected')
@@ -85,11 +85,11 @@ describe('authenticate middleware', () => {
     expect(res.status).toBe(401);
   });
 
-  // 6. Tamamen bozuk token → 401
-  it('tamamen bozuk token 401 döner', async () => {
+  // 6. Completely malformed token → 401
+  it('with completely malformed token it returns 401', async () => {
     const res = await request(app)
       .get('/protected')
-      .set('Authorization', 'Bearer bozuk.token.degeri');
+      .set('Authorization', 'Bearer malformed.token.value');
 
     expect(res.status).toBe(401);
   });

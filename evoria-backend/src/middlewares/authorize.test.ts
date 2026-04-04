@@ -8,33 +8,33 @@ import { authorize } from '../middlewares/authorize';
 import { errorHandler } from '../middlewares/errorHandler';
 import { config } from '../config/env';
 
-// --- Test app kurulumu ---
+// --- Test app setup ---
 const app = express();
 app.use(express.json());
 
-// Sadece ORGANIZER erişebilir
+// Only ORGANIZER can access
 app.get('/organizer-only', authenticate, authorize('ORGANIZER'), (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// Sadece ATTENDEE erişebilir
+// only ATTENDEE can access
 app.get('/attendee-only', authenticate, authorize('ATTENDEE'), (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// ORGANIZER veya ADMIN erişebilir
+// ORGANIZER or ADMIN can access
 app.get('/organizer-or-admin', authenticate, authorize('ORGANIZER', 'ADMIN'), (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// authorize tek başına (authenticate olmadan)
+// only authorize (without authenticate)
 app.get('/no-auth', authorize('ORGANIZER'), (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
 app.use(errorHandler);
 
-// Token üretici yardımcı
+// Helper function to create token
 function makeToken(role: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN') {
   return jwt.sign(
     { userId: 'test-id', email: 'test@example.com', role },
@@ -46,7 +46,7 @@ function makeToken(role: 'ATTENDEE' | 'ORGANIZER' | 'ADMIN') {
 describe('authorize middleware', () => {
 
   // 1. ORGANIZER → ORGANIZER-only route → 200
-  it('ORGANIZER token ile ORGANIZER-only route geçer', async () => {
+  it('with ORGANIZER token, ORGANIZER-only route passes', async () => {
     const res = await request(app)
       .get('/organizer-only')
       .set('Authorization', `Bearer ${makeToken('ORGANIZER')}`);
@@ -55,7 +55,7 @@ describe('authorize middleware', () => {
   });
 
   // 2. ATTENDEE → ORGANIZER-only route → 403
-  it('ATTENDEE token ile ORGANIZER-only route 403 döner', async () => {
+  it('with ATTENDEE token, ORGANIZER-only route returns 403', async () => {
     const res = await request(app)
       .get('/organizer-only')
       .set('Authorization', `Bearer ${makeToken('ATTENDEE')}`);
@@ -64,7 +64,7 @@ describe('authorize middleware', () => {
   });
 
   // 3. ORGANIZER → ATTENDEE-only route → 403
-  it('ORGANIZER token ile ATTENDEE-only route 403 döner', async () => {
+  it('with ORGANIZER token, ATTENDEE-only route returns 403', async () => {
     const res = await request(app)
       .get('/attendee-only')
       .set('Authorization', `Bearer ${makeToken('ORGANIZER')}`);
@@ -73,7 +73,7 @@ describe('authorize middleware', () => {
   });
 
   // 4. ATTENDEE → ATTENDEE-only route → 200
-  it('ATTENDEE token ile ATTENDEE-only route geçer', async () => {
+  it('with ATTENDEE token, ATTENDEE-only route passes', async () => {
     const res = await request(app)
       .get('/attendee-only')
       .set('Authorization', `Bearer ${makeToken('ATTENDEE')}`);
@@ -81,8 +81,8 @@ describe('authorize middleware', () => {
     expect(res.status).toBe(200);
   });
 
-  // 5. ADMIN → ORGANIZER veya ADMIN route → 200
-  it('ADMIN token ile ORGANIZER-or-ADMIN route geçer', async () => {
+  // 5. ADMIN → ORGANIZER or ADMIN route → 200
+  it('with ADMIN token, ORGANIZER-or-ADMIN route passes', async () => {
     const res = await request(app)
       .get('/organizer-or-admin')
       .set('Authorization', `Bearer ${makeToken('ADMIN')}`);
@@ -90,8 +90,8 @@ describe('authorize middleware', () => {
     expect(res.status).toBe(200);
   });
 
-  // 6. ATTENDEE → ORGANIZER veya ADMIN route → 403
-  it('ATTENDEE token ile ORGANIZER-or-ADMIN route 403 döner', async () => {
+  // 6. ATTENDEE → ORGANIZER or ADMIN route → 403
+  it('with ATTENDEE token, ORGANIZER-or-ADMIN route returns 403', async () => {
     const res = await request(app)
       .get('/organizer-or-admin')
       .set('Authorization', `Bearer ${makeToken('ATTENDEE')}`);
@@ -99,8 +99,8 @@ describe('authorize middleware', () => {
     expect(res.status).toBe(403);
   });
 
-  // 7. authorize tek başına (req.user yok) → 401
-  it('authenticate olmadan authorize 401 döner', async () => {
+  // 7. only authorize (req.user undefined) → 401
+  it('with no authentication, authorize returns 401', async () => {
     const res = await request(app).get('/no-auth');
 
     expect(res.status).toBe(401);

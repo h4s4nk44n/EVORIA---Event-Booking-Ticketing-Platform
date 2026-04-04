@@ -24,7 +24,7 @@ let organizerId: string;
 let organizerToken: string;
 
 beforeAll(async () => {
-  // Organizer oluştur
+  // Create an organizer user
   const res = await request(app).post('/auth/register').send({
     name:     'List Test Organizer',
     email:    'listorg@test-list.com',
@@ -34,7 +34,7 @@ beforeAll(async () => {
   organizerId   = res.body.user.id;
   organizerToken = makeOrganizerToken(organizerId);
 
-  // Test eventleri oluştur
+  // Create test events
   await request(app).post('/events')
     .set('Authorization', `Bearer ${organizerToken}`)
     .send({ title: 'React Workshop', description: 'A workshop about React hooks and state', dateTime: futureDate(5),  capacity: 30 });
@@ -65,8 +65,8 @@ afterAll(async () => {
 
 describe('GET /events', () => {
 
-  // 1. Token olmadan 200 → public endpoint
-  it('token olmadan 200 ve { data, total, page, limit, totalPages } döner', async () => {
+  // 1. Without token 200 → public endpoint 
+  it('It returns { data, total, page, limit, totalPages } and 200 without token', async () => {
     const res = await request(app).get('/events');
 
     expect(res.status).toBe(200);
@@ -78,8 +78,8 @@ describe('GET /events', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
-  // 2. Her event bookedCount ve availableSpots içermeli
-  it('her event bookedCount ve availableSpots içerir', async () => {
+  // 2. Every event should include bookedCount and availableSpots
+  it('Every event includes bookedCount and availableSpots', async () => {
     const res = await request(app).get('/events');
 
     expect(res.status).toBe(200);
@@ -89,8 +89,8 @@ describe('GET /events', () => {
     });
   });
 
-  // 3. ?search=react → sadece React içeren eventler gelmeli (case-insensitive)
-  it('?search=react ile sadece React içeren eventler döner', async () => {
+  // 3. ?search=react → only React related events returned (case-insensitive)
+  it('?search=react → only React related events returned', async () => {
     const res = await request(app).get('/events?search=react');
 
     expect(res.status).toBe(200);
@@ -99,8 +99,8 @@ describe('GET /events', () => {
     });
   });
 
-  // 4. ?page=1&limit=2 → max 2 event döner
-  it('?page=1&limit=2 ile 2 event döner', async () => {
+  // 4. ?page=1&limit=2 → max 2 event returnes
+  it('?page=1&limit=2 → only 2 events returned', async () => {
     const res = await request(app).get('/events?page=1&limit=2');
 
     expect(res.status).toBe(200);
@@ -109,16 +109,16 @@ describe('GET /events', () => {
     expect(res.body.limit).toBe(2);
   });
 
-  // 5. limit 50'den büyük olamaz
-  it('limit 50 ile sınırlandırılır', async () => {
+  // 5. limit can't be greater than 50
+  it('limit cannot be greater than 50', async () => {
     const res = await request(app).get('/events?limit=100');
 
     expect(res.status).toBe(200);
     expect(res.body.limit).toBe(50);
   });
 
-  // 6. ?from ve ?to ile tarih filtresi
-  it('?from ve ?to ile tarih aralığı filtresi çalışır', async () => {
+  // 6. Date filter with ?from and ?to
+  it('Date filter with ?from and ?to works', async () => {
     const from = new Date();
     from.setDate(from.getDate() + 3);
 
@@ -136,8 +136,8 @@ describe('GET /events', () => {
     });
   });
 
-  // 7. totalPages doğru hesaplanmalı
-  it('totalPages doğru hesaplanır', async () => {
+  // 7. totalPages should be calculated correctly
+  it('totalPages should be calculated correctly', async () => {
     const res = await request(app).get('/events?limit=2');
 
     expect(res.status).toBe(200);

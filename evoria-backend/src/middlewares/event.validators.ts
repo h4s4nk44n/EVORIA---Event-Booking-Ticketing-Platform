@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Şemayı "body" objesi içine alıyoruz
+// We wrap the schema inside a "body" object to match the structure of the request object in our validation middleware
 export const createEventSchema = z.object({
   body: z.object({
     title:       z.string().min(3).max(120),
@@ -14,7 +14,7 @@ export const createEventSchema = z.object({
   })
 });
 
-// Update için body içindeki alanları optional yapıyoruz
+// For update, we make the fields inside body optional
 export const updateEventSchema = z.object({
   body: createEventSchema.shape.body.partial()
 });

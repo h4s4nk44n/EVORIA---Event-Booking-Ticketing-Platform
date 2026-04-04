@@ -25,7 +25,7 @@ let organizer2Token: string;
 let eventId: string;
 
 beforeAll(async () => {
-  // 1. Organizer 1 (Owner) oluştur
+  // 1. Create organizer 1 (Owner)
   const res1 = await request(app).post('/auth/register').send({
     name: 'Stats Org 1', email: 'statsorg1@test-stats.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -33,7 +33,7 @@ beforeAll(async () => {
   organizer1Id = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
 
-  // 2. Organizer 2 (Other) oluştur
+  // 2. Create organizer 2 (Other)
   const res2 = await request(app).post('/auth/register').send({
     name: 'Stats Org 2', email: 'statsorg2@test-stats.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -41,7 +41,7 @@ beforeAll(async () => {
   organizer2Id = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);
 
-  // 3. Organizer 1'e ait bir event oluştur
+  // 3. Create an event with organizer 1
   const eventRes = await request(app)
     .post('/events')
     .set('Authorization', `Bearer ${organizer1Token}`)
@@ -52,9 +52,6 @@ beforeAll(async () => {
       capacity: 100,
     });
   eventId = eventRes.body.event.id;
-
-  // Not: Eğer istersen Prisma üzerinden birkaç Booking ekleyip ticketsSold 
-  // değerinin artıp artmadığını da test edebilirsin. Şu an 0 olması bekleniyor.
 });
 
 afterAll(async () => {
@@ -69,8 +66,8 @@ afterAll(async () => {
 
 describe('GET /events/:id/stats', () => {
 
-  // 1. Owner -> 200 ve Stats objesi
-  it('owner ile çağrıldığında 200 ve istatistikleri döner', async () => {
+  // 1. Owner -> 200 ve Stats object
+  it('with owner it returns 200 and stats object', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/stats`)
       .set('Authorization', `Bearer ${organizer1Token}`);
@@ -79,12 +76,12 @@ describe('GET /events/:id/stats', () => {
     expect(res.body.eventId).toBe(eventId);
     expect(res.body.title).toBe('Stats Event');
     expect(res.body.capacity).toBe(100);
-    expect(res.body.ticketsSold).toBe(0); // Henüz rezervasyon yok
+    expect(res.body.ticketsSold).toBe(0); // No bookings yet
     expect(res.body.ticketsRemaining).toBe(100);
   });
 
   // 2. Different organizer -> 403
-  it('farklı organizer ile çağrıldığında 403 döner', async () => {
+  it('with different organizer it returns 403', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/stats`)
       .set('Authorization', `Bearer ${organizer2Token}`);
@@ -93,7 +90,7 @@ describe('GET /events/:id/stats', () => {
   });
 
   // 3. Non-existent event -> 404
-  it('olmayan event ID ile çağrıldığında 404 döner', async () => {
+  it('with non-existent event it returns 404', async () => {
     const res = await request(app)
       .get('/events/nonexistent-id/stats')
       .set('Authorization', `Bearer ${organizer1Token}`);

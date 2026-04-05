@@ -18,8 +18,8 @@ app.use(helmet()); // Sets: X-Frame-Options, X-Content-Type-Options, CSP, etc.
 app.use(cors({
   origin: config.ALLOWED_ORIGIN,  // e.g. 'http://localhost:3001'
   credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.options(/.*/, cors()); // Handle preflight requests
@@ -29,11 +29,6 @@ const morganStream = { write: (message: string) => logger.http(message.trim()) }
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
 app.use('/', routes);
-
-app.get('/health', async (_req, res) => {
-  await prisma.$queryRaw`SELECT 1`;
-  res.json({ status: 'ok', db: 'connected' });
-});
 
 app.use('/admin', adminRouter); // Use routes first
 app.use(notFound);

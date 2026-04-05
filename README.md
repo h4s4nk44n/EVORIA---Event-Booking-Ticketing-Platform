@@ -19,7 +19,7 @@
 Clone the repository and navigate to the project:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/h4s4nk44n/EVORIA---Event-Booking-Ticketing-Platform
 cd evoria-backend
 ```
 

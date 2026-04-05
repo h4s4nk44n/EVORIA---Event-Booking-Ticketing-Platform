@@ -1,6 +1,7 @@
 #!/bin/bash
 # Evoria API Manual Test Script - 23 Test Cases
 # Executes all flows and generates TESTING.md
+# Claude helped me writing this run-tests.sh script, which performs 23 API tests covering all major flows and edge cases. It uses curl for requests and jq for JSON parsing. Results are collected and summarized in a TESTING.md file.
 
 BASE="http://localhost:3000"
 JQ="$HOME/bin/jq.exe"

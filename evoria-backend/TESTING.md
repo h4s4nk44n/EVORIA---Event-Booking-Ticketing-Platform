@@ -1,3 +1,4 @@
+<!-- This markdown file is written by Claude - Hasan Kaan Doygun -->
 # Evoria API - Manual Test Results
 
 **Date:** 2026-04-04

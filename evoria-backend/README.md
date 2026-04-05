@@ -1,3 +1,4 @@
+<!-- This markdown file is written by Claude - Hasan Kaan Doygun -->
 # Evoria — Event Booking & Ticketing Platform
 
 ## Team

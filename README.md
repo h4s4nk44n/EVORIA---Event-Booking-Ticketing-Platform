@@ -882,3 +882,9 @@ Flow:
 ```
 Request → Route → Controller → Service → Prisma → DB
 ```
+
+| Student    | Role   | School Number                                |
+|------------|--------|-----------------------------------------------|
+| `Hasan Kaan Doygun` | `Booking, Security & DevOps` | `2640464`      | 
+| `Burak Sağbaş`    | `Foundation & Admin` | `2690824`      | 
+| `Taha Turkay Aktaş` | `Auth, Events & Dashboard` | `2640274`     |

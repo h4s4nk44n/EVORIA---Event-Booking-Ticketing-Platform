@@ -1,3 +1,4 @@
+import xss from 'xss';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
@@ -14,12 +15,12 @@ export async function registerUser(data: {
 
   // Prisma throws P2002 on duplicate email → errorHandler returns 409 automatically
   const user = await prisma.user.create({
-    data: { ...data, password: hashed },
+    data: { ...data, name: xss(data.name), password: hashed },
     select: {
-      id:        true,
-      name:      true,
-      email:     true,
-      role:      true,
+      id: true,
+      name: true,
+      email: true,
+      role: true,
       createdAt: true,
       // password intentionally excluded
     },
@@ -43,13 +44,13 @@ export async function loginUser(email: string, password: string) {
     { expiresIn: '7d' }
   );
 
-  return {
+  return { // doesn't return password
     token,
     user: {
-      id:    user.id,
-      name:  user.name,
+      id: user.id,
+      name: user.name,
       email: user.email,
-      role:  user.role,
+      role: user.role,
     },
   };
 }

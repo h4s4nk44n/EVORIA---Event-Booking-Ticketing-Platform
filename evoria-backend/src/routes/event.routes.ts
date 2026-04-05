@@ -1,38 +1,21 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { authenticate } from '../middlewares/auth';
 import { authorize } from '../middlewares/authorize';
-import { validateRequest } from '../middlewares/validateRequest';
-import { createEvent, updateEvent, listEvents, getEvent, deleteEvent } from '../controllers/event.controller';
+import { validate } from '../middlewares/validation'; // validation middleware imported
+import { createEvent, updateEvent, listEvents, getEvent, deleteEvent, getStats, getAttendees} from '../controllers/event.controller';
+import { createEventSchema, updateEventSchema } from '../middlewares/event.validators'; // Importing new validators
 
 const router = Router();
-
-const createEventSchema = z.object({
-  title:       z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  dateTime:    z.string().datetime().refine(
-    d => new Date(d) > new Date(),
-    { message: 'Event date must be in the future' }
-  ),
-  capacity:    z.number().int().min(1, 'Capacity must be at least 1'),
-});
-
-const updateEventSchema = z.object({
-  title:       z.string().min(3, 'Title must be at least 3 characters').optional(),
-  description: z.string().min(10, 'Description must be at least 10 characters').optional(),
-  dateTime:    z.string().datetime().refine(
-    d => new Date(d) > new Date(),
-    { message: 'Event date must be in the future' }
-  ).optional(),
-  capacity:    z.number().int().min(1, 'Capacity must be at least 1').optional(),
-});
 
 // Public routes — no auth required
 router.get('/',    listEvents);
 router.get('/:id', getEvent);
+router.get('/:id/stats', authenticate, authorize('ORGANIZER'), getStats);
+router.get('/:id/attendees', authenticate, authorize('ORGANIZER'), getAttendees);
 
-router.post('/',     authenticate, authorize('ORGANIZER'), validateRequest(createEventSchema), createEvent);
-router.put('/:id',  authenticate, authorize('ORGANIZER'), validateRequest(updateEventSchema), updateEvent);
+// Protected routes — require authentication and authorization
+router.post('/', authenticate, authorize('ORGANIZER'), validate(createEventSchema), createEvent);
+router.put('/:id', authenticate, authorize('ORGANIZER'), validate(updateEventSchema), updateEvent);
 router.delete('/:id', authenticate, authorize('ORGANIZER'), deleteEvent);
 
 export default router;

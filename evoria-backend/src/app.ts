@@ -8,6 +8,7 @@ import { errorHandler } from './middlewares/errorHandler';
 import { prisma } from './config/prisma';
 import { notFound } from './middlewares/notFound';
 import adminRouter from './routes/admin.routes';
+import { logger } from './utils/logger';
 
 const app = express();
 
@@ -24,7 +25,8 @@ app.use(cors({
 app.options(/.*/, cors()); // Handle preflight requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
+const morganStream = { write: (message: string) => logger.http(message.trim()) };
+app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
 app.use('/', routes);
 

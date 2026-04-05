@@ -122,7 +122,7 @@ describe('errorHandler', () => {
   });
   describe('when error is a ZodError', () => {
     it('should return 400 with validation details', () => {
-      // 1. Sahte (mock) Response objesi oluştur
+      // 1. Fake (mock) Response object creation
       const req = {} as Request;
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -130,23 +130,23 @@ describe('errorHandler', () => {
       } as unknown as Response;
       const next = jest.fn() as NextFunction;
 
-      // 2. Örnek bir ZodError objesi yarat
+      // 2. Example ZodError object creation
       const zodError = new ZodError([
         {
-          code: 'custom', // 'too_small' yerine 'custom' kullandık
+          code: 'custom',
           message: 'Too small: expected string to have >=3 characters',
           path: ['body', 'title'],
         },
       ]);
 
-      // 3. Middleware'i çağır
+      // 3. Call middleware with ZodError
       errorHandler(zodError, req, res, next);
 
-      // 4. Doğru statü ve JSON formatıyla döndüğünü test et
+      // 4. Test the correct status and JSON response
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         error: 'Validation error',
-        details: zodError.flatten().fieldErrors, // Eğer önceki adımda details: err.flatten().fieldErrors yaptıysan, burayı da ona göre güncellemelisin!
+        details: zodError.flatten().fieldErrors, 
       });
     });
   });

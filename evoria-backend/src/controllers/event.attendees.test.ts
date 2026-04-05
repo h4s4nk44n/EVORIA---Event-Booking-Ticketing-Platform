@@ -23,11 +23,11 @@ let organizer2Id: string;
 let attendeeId: string;
 let organizer1Token: string;
 let organizer2Token: string;
-let attendeeToken: string;
+let _attendeeToken: string;
 let eventId: string;
 
 beforeAll(async () => {
-  // Organizer 1 oluştur
+  // Create Organizer 1
   const res1 = await request(app).post('/auth/register').send({
     name: 'Attendees Org 1', email: 'attendeesorg1@test-attendees.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -35,7 +35,7 @@ beforeAll(async () => {
   organizer1Id    = res1.body.user.id;
   organizer1Token = makeToken('ORGANIZER', organizer1Id);
 
-  // Organizer 2 oluştur
+  // Create Organizer 2
   const res2 = await request(app).post('/auth/register').send({
     name: 'Attendees Org 2', email: 'attendeesorg2@test-attendees.com',
     password: 'Test1234!', role: 'ORGANIZER',
@@ -43,15 +43,15 @@ beforeAll(async () => {
   organizer2Id    = res2.body.user.id;
   organizer2Token = makeToken('ORGANIZER', organizer2Id);
 
-  // Attendee oluştur
+  // Create Attendee
   const res3 = await request(app).post('/auth/register').send({
     name: 'Test Attendee', email: 'attendee@test-attendees.com',
     password: 'Test1234!', role: 'ATTENDEE',
   });
   attendeeId    = res3.body.user.id;
-  attendeeToken = makeToken('ATTENDEE', attendeeId);
+  _attendeeToken = makeToken('ATTENDEE', attendeeId);
 
-  // Organizer 1'e ait event oluştur
+  // Create event for Organizer 1
   const eventRes = await request(app)
     .post('/events')
     .set('Authorization', `Bearer ${organizer1Token}`)
@@ -63,7 +63,7 @@ beforeAll(async () => {
     });
   eventId = eventRes.body.event.id;
 
-  // Attendee'yi direkt Prisma ile event'e kaydet
+  // Save attendee directly to event using Prisma (bypass booking endpoint)
   await prisma.booking.create({
     data: { userId: attendeeId, eventId },
   });
@@ -79,8 +79,8 @@ afterAll(async () => {
 
 describe('GET /events/:id/attendees', () => {
 
-  // 1. Owner → 200 ve paginated liste
-  it('owner ile 200 ve { data, total, page, limit, totalPages } döner', async () => {
+  // 1. Owner → 200 and paginated liste 
+  it('It returns 200, owner and{ data, total, page, limit, totalPages }', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees`)
       .set('Authorization', `Bearer ${organizer1Token}`);
@@ -94,8 +94,8 @@ describe('GET /events/:id/attendees', () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 
-  // 2. Her kayıt bookingId, bookedAt, user içermeli
-  it('her kayıt bookingId, bookedAt ve user içerir', async () => {
+  // 2. Every record should contain bookingId, bookedAt and user
+  it('Every record should contain bookingId, bookedAt and user', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees`)
       .set('Authorization', `Bearer ${organizer1Token}`);
@@ -112,8 +112,8 @@ describe('GET /events/:id/attendees', () => {
     });
   });
 
-  // 3. User objesinde password olmamalı
-  it('user objesinde password bulunmaz', async () => {
+  // 3. The user object should not contain password field
+  it('The user object should not contain password field', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees`)
       .set('Authorization', `Bearer ${organizer1Token}`);
@@ -124,8 +124,8 @@ describe('GET /events/:id/attendees', () => {
     });
   });
 
-  // 4. Farklı organizer → 403
-  it('farklı organizer ile 403 döner', async () => {
+  // 4. Different organizer → 403
+  it('It returns 403 and different organizer', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees`)
       .set('Authorization', `Bearer ${organizer2Token}`);
@@ -133,16 +133,16 @@ describe('GET /events/:id/attendees', () => {
     expect(res.status).toBe(403);
   });
 
-  // 5. Token yok → 401
-  it('token olmadan 401 döner', async () => {
+  // 5. No token → 401
+  it('It returns 401 and no token', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees`);
 
     expect(res.status).toBe(401);
   });
 
-  // 6. Olmayan event → 404
-  it('olmayan event ID ile 404 döner', async () => {
+  // 6. Nonexistent event → 404
+  it('It returns 404 and nonexistent event ID', async () => {
     const res = await request(app)
       .get('/events/nonexistent-id/attendees')
       .set('Authorization', `Bearer ${organizer1Token}`);
@@ -150,8 +150,8 @@ describe('GET /events/:id/attendees', () => {
     expect(res.status).toBe(404);
   });
 
-  // 7. Pagination çalışıyor mu
-  it('?page=1&limit=1 ile 1 kayıt döner', async () => {
+  // 7. Is pagination working?
+  it('It returns 1 record with ?page=1&limit=1', async () => {
     const res = await request(app)
       .get(`/events/${eventId}/attendees?page=1&limit=1`)
       .set('Authorization', `Bearer ${organizer1Token}`);

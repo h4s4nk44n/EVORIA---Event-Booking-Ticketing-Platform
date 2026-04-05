@@ -10,11 +10,11 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  // 2. ZOD VALIDASYON HATALARI İÇİN BU BLOĞU EKLEDİK (400 Bad Request döner)
+  // This block is added for handling Zod validation errors (returns 400 Bad Request)
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: 'Validation error',
-      details: err.flatten().fieldErrors, // Hangi alanların hatalı olduğunu dönmek frontend için hayat kurtarır
+      details: err.flatten().fieldErrors,
     });
   }
   if (err instanceof AppError) {

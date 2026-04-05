@@ -17,10 +17,10 @@ export async function registerUser(data: {
   const user = await prisma.user.create({
     data: { ...data, name: xss(data.name), password: hashed },
     select: {
-      id:        true,
-      name:      true,
-      email:     true,
-      role:      true,
+      id: true,
+      name: true,
+      email: true,
+      role: true,
       createdAt: true,
       // password intentionally excluded
     },
@@ -44,13 +44,13 @@ export async function loginUser(email: string, password: string) {
     { expiresIn: '7d' }
   );
 
-  return {
+  return { // doesn't return password
     token,
     user: {
-      id:    user.id,
-      name:  user.name,
+      id: user.id,
+      name: user.name,
       email: user.email,
-      role:  user.role,
+      role: user.role,
     },
   };
 }

@@ -4,14 +4,14 @@ import request from 'supertest';
 import app from '../app';
 import { prisma } from '../config/prisma';
 
-// Her testten sonra oluşturulan test kullanıcılarını temizle
+// Cleanup test users after each test
 afterEach(async () => {
   await prisma.user.deleteMany({
     where: { email: { contains: '@test-register.com' } },
   });
 });
 
-// Tüm testler bitince Prisma bağlantısını kapat
+// When all tests are done, disconnect Prisma
 afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -25,8 +25,8 @@ const validBody = {
 
 describe('POST /auth/register', () => {
 
-  // 1. Geçerli body → 201 ve user objesi dönmeli
-  it('geçerli body ile 201 ve user objesi döner', async () => {
+  // 1. It should return 201 and user object with valid body
+  it('should return 201 and user object with valid body', async () => {
     const res = await request(app).post('/auth/register').send(validBody);
 
     expect(res.status).toBe(201);
@@ -36,16 +36,16 @@ describe('POST /auth/register', () => {
     expect(res.body.user.role).toBe('ATTENDEE');
   });
 
-  // 2. Response'da password field'ı asla olmamalı
-  it('response\'da password field\'ı bulunmaz', async () => {
+  // 2. There shouldn't be a password field in the response user object
+  it("There shouldn't be a password field in the response user object", async () => {
     const res = await request(app).post('/auth/register').send(validBody);
 
     expect(res.status).toBe(201);
     expect(res.body.user.password).toBeUndefined();
   });
 
-  // 3. Response'da beklenen field'lar var mı
-  it('user objesi id, name, email, role, createdAt içerir', async () => {
+  // 3. Is the response user object contain expected fields?
+  it('user object should contain id, name, email, role, createdAt fields', async () => {
     const res = await request(app).post('/auth/register').send(validBody);
 
     expect(res.status).toBe(201);
@@ -57,18 +57,18 @@ describe('POST /auth/register', () => {
   });
 
   // 4. Duplicate email → 409
-  it('aynı email ile ikinci kayıt 409 döner', async () => {
-    // İlk kayıt
+  it('should return 409 for duplicate email', async () => {
+    // First registiration
     await request(app).post('/auth/register').send(validBody);
 
-    // Aynı email ile ikinci kayıt
+    // Same email with second registration
     const res = await request(app).post('/auth/register').send(validBody);
 
     expect(res.status).toBe(409);
   });
 
   // 5. role: 'ADMIN' → 400
-  it("role: 'ADMIN' gönderilince 400 döner", async () => {
+  it("should return 400 for role: 'ADMIN'", async () => {
     const res = await request(app).post('/auth/register').send({
       ...validBody,
       email: 'admin@test-register.com',
@@ -78,12 +78,12 @@ describe('POST /auth/register', () => {
     expect(res.status).toBe(400);
   });
 
-  // 6. Şifre 8 karakterden kısa → 400 ve field hatası
-  it('password 8 karakterden kısaysa 400 ve field hatası döner', async () => {
+  // 6. Should return 400 and field error for password shorter than 8 characters
+  it('should return 400 and field error for password shorter than 8 characters', async () => {
     const res = await request(app).post('/auth/register').send({
       ...validBody,
       email: 'short@test-register.com',
-      password: '1234567', // 7 karakter
+      password: '1234567', // 7 characters
     });
 
     expect(res.status).toBe(400);
@@ -92,8 +92,8 @@ describe('POST /auth/register', () => {
     expect(passError).toBeDefined();
   });
 
-  // 7. Eksik body → 400
-  it('body boş gönderilince 400 döner', async () => {
+  // 7. Missing body → 400
+  it('should return 400 for missing body', async () => {
     const res = await request(app).post('/auth/register').send({});
 
     expect(res.status).toBe(400);
@@ -101,11 +101,11 @@ describe('POST /auth/register', () => {
     expect(res.body.errors).toBeInstanceOf(Array);
   });
 
-  // 8. Geçersiz email formatı → 400
-  it('geçersiz email formatı 400 döner', async () => {
+  // 8. Invalid email format → 400
+  it('should return 400 for invalid email format', async () => {
     const res = await request(app).post('/auth/register').send({
       ...validBody,
-      email: 'bu-email-degil',
+      email: 'this-is-not-an-email',
     });
 
     expect(res.status).toBe(400);

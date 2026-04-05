@@ -1,217 +1,99 @@
-# Evoria Backend
+# Evoria — Event Booking & Ticketing Platform
 
-Backend scaffold for **Evoria**, built with **Express**, **TypeScript**, and **Prisma**, following **MVC + Service Layer architecture**.
+## Team
 
----
+| Name                | Student ID | Role                        |
+| ------------------- | ---------- | --------------------------- |
+| Hasan Kaan Doygun   | 2640464    | Booking, Security & DevOps  |
+| Taha Turkay Aktaş   | 2640274    | Auth, Events & Dashboard    |
+| Burak Sağbaş        | 2690824    | Foundation & Admin          |
 
-## Tech Stack
+## Prerequisites
 
-- Node.js + npm
-- Express
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- Zod (validation)
-- JWT (auth)
-- Winston (logging)
-
----
-
-## Project Structure
-
-```
-evoria-backend/
-├── src/
-│   ├── app.ts            # Express app config
-│   ├── server.ts         # Server entry point
-│   │
-│   ├── routes/           # Route definitions
-│   ├── controllers/      # HTTP layer
-│   ├── services/         # Business logic
-│   ├── middlewares/      # Auth, validation, errors
-│   ├── utils/            # Helpers (logger, errors, responses)
-│   └── config/           # Env config
-│
-├── prisma/
-│   └── schema.prisma     # DB schema
-│
-├── .env
-├── .env.example
-├── package.json
-└── tsconfig.json
-```
-
----
+- Node.js >= 18.x
+- PostgreSQL >= 14
+- npm >= 9.x
 
 ## Setup
 
-### 1. Clone & install
+Clone the repository and navigate to the project:
 
 ```bash
 git clone <repo-url>
 cd evoria-backend
+```
+
+Install dependencies:
+
+```bash
 npm install
 ```
 
----
-
-### 2. Environment variables
-
-Create `.env`:
+Set up environment variables:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit:
+Fill in database credentials and `JWT_SECRET`.
 
-```env
-DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/evoria_db
-JWT_SECRET=your_secret
-PORT=3000
-```
-
----
-
-## Database Setup
-
-Make sure **PostgreSQL is running**.
-
-### Option A — Local PostgreSQL
+Create the PostgreSQL database:
 
 ```bash
-sudo systemctl start postgresql
+createdb evoria_db
 ```
 
-Create DB:
+Run database migrations:
 
 ```bash
-sudo -iu postgres psql
+npx prisma migrate dev
 ```
 
-```sql
-CREATE DATABASE evoria_db;
-CREATE USER evoria_user WITH PASSWORD 'password';
-GRANT ALL PRIVILEGES ON DATABASE evoria_db TO evoria_user;
-\q
-```
-
-Update `.env` accordingly.
-
----
-
-### Option B — Docker (recommended)
+Seed the database:
 
 ```bash
-docker run --name evoria-postgres \
-  -e POSTGRES_USER=evoria_user \
-  -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=evoria_db \
-  -p 5432:5432 \
-  -d postgres:16
+npx prisma db seed
 ```
 
----
-
-## Prisma
-
-Generate client:
-
-```bash
-npm run prisma:generate
-```
-
-Run migrations:
-
-```bash
-npm run prisma:migrate -- --name init
-```
-
-Open Prisma Studio:
-
-```bash
-npm run prisma:studio
-```
-
----
-
-## Running the App
-
-### Development
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Server will run at:
+## Environment Variables
+
+| Variable               | Description                               | Example                                  |
+| ---------------------- | ----------------------------------------- | ---------------------------------------- |
+| `DATABASE_URL`         | PostgreSQL connection string              | `postgresql://user:pw@localhost:5432/evoria_db` |
+| `JWT_SECRET`           | Secret key for JWT signing (min 32 chars) | `my_very_long_secret_key_here`           |
+| `PORT`                 | Server port                               | `3000`                                   |
+| `ALLOWED_ORIGIN`       | Frontend URL for CORS                     | `http://localhost:3001`                  |
+| `NODE_ENV`             | Application environment                   | `development`                            |
+| `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds         | `900000`                                 |
+| `RATE_LIMIT_AUTH_MAX`  | Max auth requests per window              | `10`                                     |
+
+## Architecture
 
 ```
-http://localhost:3000
+Request → Route → Middleware (auth, RBAC, validation) → Controller → Service → Prisma → PostgreSQL
 ```
 
----
+## Project Structure
 
-### Production
-
-```bash
-npm run build
-npm start
+```
+src/
+  routes/        Wire up middleware and controllers
+  controllers/   Parse requests, call services, send responses
+  services/      Business logic and database operations
+  middlewares/   authenticate, authorize, validateRequest, rateLimiter, errorHandler
+  utils/         AppError, logger
+  config/        env.ts (typed config), prisma.ts (singleton client)
 ```
 
----
+## Tech Stack
 
-## Health Check
-
-```bash
-GET /health
-```
-
-Response:
-
-```json
-{
-  "status": "ok",
-  "timestamp": "..."
-}
-```
-
----
-
-## Scripts
-
-```bash
-npm run dev            # Start dev server (nodemon + ts-node)
-npm run build          # Compile TypeScript
-npm start              # Run compiled app
-npm run typecheck      # TypeScript check only
-
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:studio
-```
-
----
-
-## Common Issues
-
-### Prisma P1001 (DB not reachable)
-- PostgreSQL not running
-- Wrong `DATABASE_URL`
-
-Check:
-
-```bash
-ss -ltnp | grep 5432
-```
-
----
-
-### PrismaClient not found
-Run:
-
-```bash
-npm run prisma:generate
-```
+Node.js · Express · TypeScript · PostgreSQL · Prisma ORM · Zod · JWT · bcryptjs · Winston · Docker (Part 2)
 
 ---
 
@@ -241,17 +123,17 @@ Register a new user account.
 {
   "name": "Alice Example",
   "email": "alice@example.com",
-  "password": "SecurePass1",
+  "password": "SecurePass1!",
   "role": "ATTENDEE"
 }
 ```
 
-| Field      | Type   | Required | Rules                              |
-|------------|--------|----------|------------------------------------|
-| `name`     | string | Yes      | Min 2 characters                   |
-| `email`    | string | Yes      | Valid email format                 |
-| `password` | string | Yes      | Min 8 characters                   |
-| `role`     | string | Yes      | `"ATTENDEE"` or `"ORGANIZER"` only |
+| Field      | Type   | Required | Rules                                |
+|------------|--------|----------|--------------------------------------|
+| `name`     | string | Yes      | Min 2 characters                     |
+| `email`    | string | Yes      | Valid email format                   |
+| `password` | string | Yes      | Min 8 chars, uppercase, lowercase, digit, special char |
+| `role`     | string | Yes      | `"ATTENDEE"` or `"ORGANIZER"` only   |
 
 **Success response: 201**
 
@@ -285,7 +167,7 @@ Authenticate user and receive JWT token.
 ```json
 {
   "email": "alice@example.com",
-  "password": "SecurePass1"
+  "password": "SecurePass1!"
 }
 ```
 
@@ -320,13 +202,15 @@ List all events with optional search, date filtering, and pagination.
 
 **Query parameters:**
 
-| Param    | Type   | Default | Description                          |
-|----------|--------|---------|--------------------------------------|
-| `page`   | number | 1       | Page number (min 1)                  |
-| `limit`  | number | 10      | Items per page (max 50)              |
-| `search` | string | —       | Case-insensitive title search        |
-| `from`   | string | —       | ISO 8601 datetime (events on/after)  |
-| `to`     | string | —       | ISO 8601 datetime (events on/before) |
+| Param        | Type   | Default | Description                          |
+|--------------|--------|---------|--------------------------------------|
+| `page`       | number | 1       | Page number (min 1)                  |
+| `limit`      | number | 10      | Items per page (max 50)              |
+| `search`     | string | —       | Case-insensitive title search        |
+| `from`       | string | —       | ISO 8601 datetime (events on/after)  |
+| `to`         | string | —       | ISO 8601 datetime (events on/before) |
+| `categoryId` | string | —       | Filter by category                   |
+| `venueId`    | string | —       | Filter by venue                      |
 
 **Success response: 200**
 
@@ -342,6 +226,14 @@ List all events with optional search, date filtering, and pagination.
       "organizer": {
         "id": "clx9z8y7w...",
         "name": "Bob Organizer"
+      },
+      "category": {
+        "id": "clxcat1...",
+        "name": "Technology"
+      },
+      "venue": {
+        "id": "clxven1...",
+        "name": "Tech Hub"
       },
       "bookedCount": 45,
       "availableSpots": 55
@@ -362,7 +254,7 @@ List all events with optional search, date filtering, and pagination.
 
 #### GET /events/:id
 
-Get a single event by ID.
+Get a single event by ID, including ticket types.
 
 **Auth required:** No
 
@@ -380,6 +272,14 @@ Get a single event by ID.
       "id": "clx9z8y7w...",
       "name": "Bob Organizer"
     },
+    "tickets": [
+      {
+        "id": "clxtkt1...",
+        "type": "GENERAL",
+        "price": 50,
+        "quantity": 80
+      }
+    ],
     "bookedCount": 45,
     "availableSpots": 55
   }
@@ -405,7 +305,9 @@ Create a new event.
   "title": "React Workshop",
   "description": "Hands-on React workshop for beginners",
   "dateTime": "2025-06-15T14:00:00.000Z",
-  "capacity": 100
+  "capacity": 100,
+  "categoryId": "optional-category-id",
+  "venueId": "optional-venue-id"
 }
 ```
 
@@ -414,7 +316,9 @@ Create a new event.
 | `title`       | string | Yes      | 3 – 120 characters                |
 | `description` | string | Yes      | 10 – 2000 characters              |
 | `dateTime`    | string | Yes      | ISO 8601 format, must be future   |
-| `capacity`    | number | Yes      | Integer, min 1, max 100000        |
+| `capacity`    | number | Yes      | Integer, min 1, max 100 000       |
+| `categoryId`  | string | No       | Existing category ID              |
+| `venueId`     | string | No       | Existing venue ID                 |
 
 **Success response: 201**
 
@@ -439,7 +343,7 @@ Create a new event.
 
 **Error responses:**
 
-- `400` Validation failed (short title, past date, invalid capacity, etc.)
+- `400` Validation failed (short title, past date, invalid capacity)
 - `401` No token or invalid token
 - `403` User is not an ORGANIZER
 
@@ -465,7 +369,7 @@ Update an existing event (organizer must own the event).
 | `title`       | string | No       | 3 – 120 characters                |
 | `description` | string | No       | 10 – 2000 characters              |
 | `dateTime`    | string | No       | ISO 8601 format, must be future   |
-| `capacity`    | number | No       | Integer, min 1, max 100000        |
+| `capacity`    | number | No       | Integer, min 1, max 100 000       |
 
 **Success response: 200**
 
@@ -591,9 +495,15 @@ Book a ticket for an event. Uses database-level locking to prevent overbooking.
 
 ```json
 {
-  "eventId": "clx1a2b3c..."
+  "eventId": "clx1a2b3c...",
+  "ticketId": "optional-ticket-type-id"
 }
 ```
+
+| Field      | Type   | Required | Rules                    |
+|------------|--------|----------|--------------------------|
+| `eventId`  | string | Yes      | Existing event ID        |
+| `ticketId` | string | No       | Existing ticket type ID  |
 
 **Success response: 201**
 
@@ -603,6 +513,7 @@ Book a ticket for an event. Uses database-level locking to prevent overbooking.
     "id": "clx5d6e7f...",
     "userId": "clx1a2b3c...",
     "eventId": "clx1a2b3c...",
+    "ticketId": null,
     "createdAt": "2025-04-02T08:30:00.000Z",
     "event": {
       "id": "clx1a2b3c...",
@@ -625,7 +536,7 @@ Book a ticket for an event. Uses database-level locking to prevent overbooking.
 - `403` User is not an ATTENDEE
 - `404` Event not found
 - `409` Already booked this event
-- `422` Event is fully booked (at capacity)
+- `422` Event is fully booked or event is in the past
 
 ---
 
@@ -651,6 +562,7 @@ Get the authenticated user's bookings.
       "id": "clx5d6e7f...",
       "userId": "clx1a2b3c...",
       "eventId": "clx1a2b3c...",
+      "ticketId": null,
       "createdAt": "2025-04-02T08:30:00.000Z",
       "event": {
         "id": "clx1a2b3c...",
@@ -791,7 +703,7 @@ List all events across all organizers with pagination.
 
 #### DELETE /admin/users/:id
 
-Delete any user account. Also deletes all events organized by that user.
+Delete any user account. Also cascade-deletes all events organized by that user.
 
 **Auth required:** Yes (ADMIN)
 
@@ -866,19 +778,35 @@ All errors follow a consistent format:
 
 ---
 
-## Architecture
+## Scripts
 
-This project follows:
+| Script                    | Description                          |
+|---------------------------|--------------------------------------|
+| `npm run dev`             | Start dev server (nodemon + ts-node) |
+| `npm run build`           | Compile TypeScript to JavaScript     |
+| `npm start`               | Run compiled production build        |
+| `npm test`                | Run test suite                       |
+| `npm run typecheck`       | TypeScript type checking             |
+| `npx prisma studio`       | Open Prisma database GUI             |
+| `npx prisma migrate dev`  | Run database migrations              |
 
-### MVC + Service Layer
+## Docker
 
-- **Routes** → define endpoints
-- **Controllers** → handle HTTP logic
-- **Services** → business logic + DB
-- **Prisma** → database access
+```bash
+# Build and run with Docker Compose
+docker compose up --build
 
-Flow:
-
+# Or build manually
+docker build -t evoria-backend .
+docker run -p 3000:3000 --env-file .env evoria-backend
 ```
-Request → Route → Controller → Service → Prisma → DB
-```
+
+## Seed Data Credentials
+
+| Email              | Password    | Role      |
+|--------------------|-------------|-----------|
+| admin@evoria.com   | Admin1234!  | ADMIN     |
+| alice@evoria.com   | Alice1234!  | ORGANIZER |
+| bob@evoria.com     | Bob1234!    | ORGANIZER |
+| carol@evoria.com   | Carol1234!  | ATTENDEE  |
+| dave@evoria.com    | Dave1234!   | ATTENDEE  |

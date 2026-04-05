@@ -8,6 +8,46 @@
 | Taha Turkay Aktaş   | 2640274    | Auth, Events & Dashboard    |
 | Burak Sağbaş        | 2690824    | Foundation & Admin          |
 
+---
+## 📦 Tech Stack
+
+- Node.js + npm
+- Express
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Zod (validation)
+- JWT (auth)
+- Winston (logging)
+
+---
+
+## 📁 Project Structure
+
+```
+evoria-backend/
+├── src/
+│   ├── app.ts            # Express app config
+│   ├── server.ts         # Server entry point
+│   │
+│   ├── routes/           # Route definitions
+│   ├── controllers/      # HTTP layer
+│   ├── services/         # Business logic
+│   ├── middlewares/      # Auth, validation, errors
+│   ├── utils/            # Helpers (logger, errors, responses)
+│   └── config/           # Env config
+│
+├── prisma/
+│   └── schema.prisma     # DB schema
+│
+├── .env
+├── .env.example
+├── package.json
+└── tsconfig.json
+```
+
+---
+
 ## Prerequisites
 
 - Node.js >= 18.x

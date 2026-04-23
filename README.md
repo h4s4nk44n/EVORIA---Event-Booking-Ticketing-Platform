@@ -147,6 +147,8 @@ All protected endpoints require a JWT token in the `Authorization` header:
 Authorization: Bearer <token>
 ```
 
+Tokens issued by `POST /auth/login` are valid for **1 day**. This short lifetime intentionally limits the attack window if a token is compromised; clients need to re-authenticate once per day.
+
 ---
 
 ### Authentication
@@ -831,6 +833,15 @@ All errors follow a consistent format:
 | `npx prisma migrate dev`  | Run database migrations              |
 
 ## Docker
+
+### Docker setup
+
+Before running Docker Compose, create a local `.env.docker` file from the example template and fill in the real secret values. This file is git-ignored and holds the secrets used by both the `db` and `backend` services (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL`, `JWT_SECRET`).
+
+```bash
+cp evoria-backend/.env.docker.example evoria-backend/.env.docker
+# then edit evoria-backend/.env.docker and set real values
+```
 
 ```bash
 # Build and run with Docker Compose

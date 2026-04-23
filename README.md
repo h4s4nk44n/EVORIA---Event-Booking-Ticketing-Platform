@@ -147,6 +147,8 @@ All protected endpoints require a JWT token in the `Authorization` header:
 Authorization: Bearer <token>
 ```
 
+Tokens issued by `POST /auth/login` are valid for **1 day**. This short lifetime intentionally limits the attack window if a token is compromised; clients need to re-authenticate once per day.
+
 ---
 
 ### Authentication

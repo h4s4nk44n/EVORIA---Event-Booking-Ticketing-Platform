@@ -832,6 +832,15 @@ All errors follow a consistent format:
 
 ## Docker
 
+### Docker setup
+
+Before running Docker Compose, create a local `.env.docker` file from the example template and fill in the real secret values. This file is git-ignored and holds the secrets used by both the `db` and `backend` services (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL`, `JWT_SECRET`).
+
+```bash
+cp evoria-backend/.env.docker.example evoria-backend/.env.docker
+# then edit evoria-backend/.env.docker and set real values
+```
+
 ```bash
 # Build and run with Docker Compose
 docker compose up --build

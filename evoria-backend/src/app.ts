@@ -23,8 +23,8 @@ app.use(cors({
 }));
 
 app.options(/.*/, cors()); // Handle preflight requests
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 const morganStream = { write: (message: string) => logger.http(message.trim()) };
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 

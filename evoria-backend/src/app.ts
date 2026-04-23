@@ -7,7 +7,6 @@ import { config } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { prisma } from './config/prisma';
 import { notFound } from './middlewares/notFound';
-import adminRouter from './routes/admin.routes';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -30,7 +29,6 @@ app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: 
 
 app.use('/', routes);
 
-app.use('/admin', adminRouter); // Use routes first
 app.use(notFound);
 app.use(errorHandler);
 

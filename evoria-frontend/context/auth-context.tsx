@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { apiPost } from "@/lib/api";
 import {
@@ -37,8 +37,22 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Provider
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns a sanitized redirect path.
+ * Only allows relative paths to prevent open-redirect attacks.
+ */
+function sanitizeRedirect(redirect: string | null): string {
+  if (!redirect) return "/";
+  // Must start with / and must NOT be a protocol-relative URL (//example.com)
+  if (redirect.startsWith("/") && !redirect.startsWith("//")) {
+    return redirect;
+  }
+  return "/";
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -113,6 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       storeToken(newToken);
       setToken(newToken);
       setUser(decoded);
+
+      // Redirect to the originally requested page (or home).
+      const redirectTo = sanitizeRedirect(searchParams.get("redirect"));
+      router.push(redirectTo);
 
       return { ok: true };
     },

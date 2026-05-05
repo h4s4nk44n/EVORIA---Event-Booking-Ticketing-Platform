@@ -43,6 +43,7 @@ interface JwtPayload {
  * Decodes the base64url-encoded payload section of a JWT.
  * Does NOT verify the signature – signature verification must happen server-side.
  *
+ * Compatible with browser, Edge runtime, and Node.js (no Buffer dependency).
  * Returns `null` if the token is malformed.
  */
 export function decodeJwtPayload(token: string): JwtPayload | null {
@@ -53,11 +54,11 @@ export function decodeJwtPayload(token: string): JwtPayload | null {
     // base64url → base64 → binary string → JSON
     const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
-    const decoded = typeof window !== "undefined"
-      ? atob(padded)
-      : Buffer.from(padded, "base64").toString("binary");
 
-    return JSON.parse(decoded) as JwtPayload;
+    // atob is available in browsers, Edge runtime, and Node.js ≥ 16
+    const binary = atob(padded);
+
+    return JSON.parse(binary) as JwtPayload;
   } catch {
     return null;
   }

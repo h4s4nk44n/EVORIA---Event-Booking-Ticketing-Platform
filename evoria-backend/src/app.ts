@@ -7,7 +7,6 @@ import { config } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
 import { prisma } from './config/prisma';
 import { notFound } from './middlewares/notFound';
-import adminRouter from './routes/admin.routes';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -18,24 +17,18 @@ app.use(helmet()); // Sets: X-Frame-Options, X-Content-Type-Options, CSP, etc.
 app.use(cors({
   origin: config.ALLOWED_ORIGIN,  // e.g. 'http://localhost:3001'
   credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.options(/.*/, cors()); // Handle preflight requests
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 const morganStream = { write: (message: string) => logger.http(message.trim()) };
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
 app.use('/', routes);
 
-app.get('/health', async (_req, res) => {
-  await prisma.$queryRaw`SELECT 1`;
-  res.json({ status: 'ok', db: 'connected' });
-});
-
-app.use('/admin', adminRouter); // Use routes first
 app.use(notFound);
 app.use(errorHandler);
 

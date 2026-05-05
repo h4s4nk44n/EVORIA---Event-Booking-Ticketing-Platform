@@ -38,10 +38,11 @@ export async function loginUser(email: string, password: string) {
   const match = await bcrypt.compare(password, user.password);
   if (!match) throw new AppError('Invalid credentials', 401);
 
+  // Token lifetime kept short (1 day) to reduce the attack window if a token is compromised.
   const token = jwt.sign(
     { userId: user.id, email: user.email, role: user.role },
     config.JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: '1d' }
   );
 
   return { // doesn't return password

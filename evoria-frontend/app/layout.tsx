@@ -21,8 +21,7 @@ export const metadata: Metadata = {
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
-import Navbar from "@/components/Navbar";
-import { Footer } from "@/components/chrome";
+import { ChromeWrapper } from "@/components/chrome-wrapper";
 
 export default function RootLayout({
   children,
@@ -48,11 +47,9 @@ export default function RootLayout({
            */}
           <Suspense>
             <AuthProvider>
-              <Navbar />
-              <div className="flex-1">
+              <ChromeWrapper>
                 {children}
-              </div>
-              <Footer />
+              </ChromeWrapper>
               <Toaster />
             </AuthProvider>
           </Suspense>
@@ -61,4 +58,3 @@ export default function RootLayout({
     </html>
   );
 }
-

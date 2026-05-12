@@ -113,6 +113,11 @@ function toUnauthorized(req: NextRequest): NextResponse {
 export function middleware(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
+  // Development Bypass: Allow previewing admin routes without auth in dev mode
+  if (process.env.NODE_ENV === 'development' && pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
+
   // ── Determine required role (if any) ──────────────────────────────────────
   const roleRule = ROLE_RULES.find((r) => pathname.startsWith(r.prefix));
   const requiresAuth =

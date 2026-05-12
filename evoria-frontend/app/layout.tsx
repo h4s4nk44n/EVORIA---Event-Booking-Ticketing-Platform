@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/auth-context";
+import Navbar from "@/components/Navbar";
+import { Footer } from "@/components/chrome";
 
 export default function RootLayout({
   children,
@@ -33,7 +35,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -46,7 +48,11 @@ export default function RootLayout({
            */}
           <Suspense>
             <AuthProvider>
-              {children}
+              <Navbar />
+              <div className="flex-1">
+                {children}
+              </div>
+              <Footer />
               <Toaster />
             </AuthProvider>
           </Suspense>

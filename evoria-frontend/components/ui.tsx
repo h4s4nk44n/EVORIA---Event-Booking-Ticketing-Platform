@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
-import { cn as cx } from '@/lib/utils';
-import { GRADIENTS } from '@/data/events';
-import type { CategoryId } from '@/types';
-import { IconClock } from '@/components/icons';
+import { cx } from '../lib/utils';
+import { GRADIENTS } from '../data/events';
+import type { CategoryId } from '../types';
+import { IconClock } from './icons';
 
 export { cx };
 

@@ -1,4 +1,4 @@
-import type { Category, Event, Booking, GradientDef, CategoryId } from '@/types';
+import type { Category, Event, Booking, GradientDef, CategoryId } from '../types';
 
 export const CATEGORIES: Category[] = [
   { id: 'all', label: 'All events', icon: 'IconSparkles' },

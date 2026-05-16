@@ -1,11 +1,11 @@
+'use client';
+
 import { cx } from '../../../lib/utils';
 import { IconBtn, PageHeader, Table, Td, Th, Tr } from '../../../components/admin/shell';
 import {
   IconCalendar, IconChevronDown, IconDownload, IconEye, IconFilter, IconMapPin, IconSearch, IconTag, IconTrash,
 } from '../../../components/icons';
 import { ADMIN_EVENTS_LIST } from '../../../data/admin';
-
-export const metadata = { title: 'Events | EVORIA Admin' };
 
 export default function AdminEventsPage() {
   return (

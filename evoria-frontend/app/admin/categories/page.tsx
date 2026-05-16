@@ -1,8 +1,8 @@
+'use client';
+
 import { IconBtn, PageHeader, Table, Td, Th, Tr } from '../../../components/admin/shell';
 import { IconEdit, IconPlus, IconTag, IconTrash } from '../../../components/icons';
 import { ADMIN_CATEGORIES } from '../../../data/admin';
-
-export const metadata = { title: 'Categories | EVORIA Admin' };
 
 export default function AdminCategoriesPage() {
   return (

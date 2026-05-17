@@ -1,6 +1,8 @@
 export const cx = (...parts: Array<string | false | null | undefined>): string =>
   parts.filter(Boolean).join(' ');
 
+export const cn = cx;
+
 export const fmtDate = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });

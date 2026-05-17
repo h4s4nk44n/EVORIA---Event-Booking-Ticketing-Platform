@@ -7,6 +7,7 @@ import { BOOKINGS_SEED } from '../data/events';
 type BookingsContextValue = {
   bookings: Booking[];
   addBooking: (b: Booking) => void;
+  cancelBooking: (id: string) => void;
 };
 
 const BookingsContext = createContext<BookingsContextValue | null>(null);
@@ -35,7 +36,11 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
     setBookings((prev) => [b, ...prev]);
   }, []);
 
-  const value = useMemo(() => ({ bookings, addBooking }), [bookings, addBooking]);
+  const cancelBooking = useCallback((id: string) => {
+    setBookings((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  const value = useMemo(() => ({ bookings, addBooking, cancelBooking }), [bookings, addBooking, cancelBooking]);
 
   return <BookingsContext.Provider value={value}>{children}</BookingsContext.Provider>;
 }

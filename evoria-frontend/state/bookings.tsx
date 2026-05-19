@@ -37,7 +37,9 @@ export function BookingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const cancelBooking = useCallback((id: string) => {
-    setBookings((prev) => prev.filter((b) => b.id !== id));
+    // Moves a booking into the "past" bucket instead of dropping it so the
+    // user can still see their cancellation history under that filter.
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: 'past' } : b)));
   }, []);
 
   const value = useMemo(() => ({ bookings, addBooking, cancelBooking }), [bookings, addBooking, cancelBooking]);

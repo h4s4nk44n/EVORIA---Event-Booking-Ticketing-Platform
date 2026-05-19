@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { apiPost } from "@/lib/api";
+import { apiPost, toFailure } from "@/lib/api";
 import {
   extractUser,
   isTokenExpired,
@@ -25,6 +25,8 @@ import type {
   LoginCredentials,
   LoginResponse,
   LoginResult,
+  RegisterPayload,
+  RegisterResponse,
 } from "@/types/auth";
 
 // ---------------------------------------------------------------------------
@@ -88,15 +90,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (!result.ok) {
-        if (result.type === "validation") {
+        const failure = toFailure(result);
+        if (failure.type === "validation") {
           return {
             ok: false,
             type: "validation",
-            fields: result.errors.fields,
-            message: result.errors.message,
+            fields: failure.errors.fields,
+            message: failure.errors.message,
           };
         }
-        if (result.type === "unauthorized") {
+        if (failure.type === "unauthorized") {
           return {
             ok: false,
             type: "unauthorized",
@@ -107,9 +110,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ok: false,
           type: "error",
           message:
-            result.type === "server_error"
-              ? result.message
-              : result.message ?? "Login failed. Please try again.",
+            failure.type === "server_error"
+              ? failure.message
+              : failure.message ?? "Login failed. Please try again.",
         };
       }
 
@@ -137,6 +140,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
+  // ── register() ──────────────────────────────────────────────────────────
+  const register = useCallback(
+    async (payload: RegisterPayload): Promise<LoginResult> => {
+      const result = await apiPost<RegisterResponse, RegisterPayload>(
+        "/auth/register",
+        payload,
+      );
+
+      if (!result.ok) {
+        const failure = toFailure(result);
+        if (failure.type === "validation") {
+          return {
+            ok: false,
+            type: "validation",
+            fields: failure.errors.fields,
+            message: failure.errors.message,
+          };
+        }
+        if (failure.type === "unauthorized") {
+          return {
+            ok: false,
+            type: "unauthorized",
+            message: "Registration not allowed.",
+          };
+        }
+        return {
+          ok: false,
+          type: "error",
+          message:
+            failure.type === "server_error"
+              ? failure.message
+              : failure.message ?? "Registration failed. Please try again.",
+        };
+      }
+
+      const { token: newToken } = result.data;
+      const decoded = extractUser(newToken);
+
+      if (!decoded) {
+        return {
+          ok: false,
+          type: "error",
+          message: "Received an invalid token from the server.",
+        };
+      }
+
+      storeToken(newToken);
+      setToken(newToken);
+      setUser(decoded);
+
+      const redirectTo = sanitizeRedirect(searchParams.get("redirect"));
+      router.push(redirectTo);
+
+      return { ok: true };
+    },
+    [router, searchParams],
+  );
+
   // ── logout() ─────────────────────────────────────────────────────────────
   const logout = useCallback(() => {
     removeToken();
@@ -147,8 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Memoized context value ────────────────────────────────────────────────
   const value = useMemo<AuthContextValue>(
-    () => ({ user, token, isLoading, login, logout }),
-    [user, token, isLoading, login, logout],
+    () => ({ user, token, isLoading, login, register, logout }),
+    [user, token, isLoading, login, register, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

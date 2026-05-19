@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { EVENTS, CATEGORIES } from '@/data/events';
+import { CATEGORIES } from '@/data/events';
+import { useEventsStore } from '@/state/events';
 import { GradientCover, Badge, Input, Button } from '@/components/ui';
 import {
   IconSearch,
@@ -133,15 +134,16 @@ function IconStar({ size = 16, className = '' }: { size?: number; className?: st
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
   const [query, setQuery] = useState('');
+  const { publicEvents } = useEventsStore();
 
   const filtered = useMemo(() => {
-    return EVENTS.filter((ev) => {
+    return publicEvents.filter((ev) => {
       const matchCat = activeCategory === 'all' || ev.category === activeCategory;
       const q = query.trim().toLowerCase();
       const matchQ = !q || ev.title.toLowerCase().includes(q) || ev.city.toLowerCase().includes(q) || ev.artist.toLowerCase().includes(q);
       return matchCat && matchQ;
     });
-  }, [activeCategory, query]);
+  }, [publicEvents, activeCategory, query]);
 
   return (
     <>
@@ -227,7 +229,7 @@ export default function HomePage() {
                   'ml-0.5 text-[10px] font-semibold rounded-full px-1.5 py-0.5',
                   active ? 'bg-white/20 dark:bg-slate-900/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400',
                 )}>
-                  {cat.id === 'all' ? EVENTS.length : EVENTS.filter(e => e.category === cat.id).length}
+                  {cat.id === 'all' ? publicEvents.length : publicEvents.filter(e => e.category === cat.id).length}
                 </span>
               </button>
             );

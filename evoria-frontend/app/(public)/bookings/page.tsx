@@ -6,7 +6,7 @@ import { Button, Badge, Card, GradientCover, cx } from '@/components/ui';
 import {
   IconSearch, IconMapPin, IconArrowRight, IconCalendarDays, IconShare, IconTicket, IconX,
 } from '@/components/icons';
-import { EVENTS } from '@/data/events';
+import { useEventsStore } from '@/state/events';
 import { useBookings } from '@/state/bookings';
 import { RequireAuth } from '@/components/auth-guards';
 import type { Booking, Event as EventType } from '@/types';
@@ -25,6 +25,7 @@ export default function MyBookingsPage() {
 function MyBookingsInner() {
   const router = useRouter();
   const { bookings, cancelBooking } = useBookings();
+  const { publicEvents, releaseBookingSeats } = useEventsStore();
   const [filter, setFilter] = useState<Filter>('upcoming');
   const [cancelTarget, setCancelTarget] = useState<string | null>(null);
   const shown = bookings.filter((b) => (filter === 'all' ? true : b.status === filter));
@@ -64,7 +65,7 @@ function MyBookingsInner() {
       ) : (
         <div className="space-y-4">
           {shown.map((b) => {
-            const ev = EVENTS.find((e) => e.id === b.eventId);
+            const ev = publicEvents.find((e) => e.id === b.eventId);
             if (!ev) return null;
             return <BookingCard key={b.id} booking={b} event={ev} onOpen={(id) => router.push(`/events/${id}`)} onCancel={(id) => setCancelTarget(id)} />;
           })}
@@ -88,7 +89,12 @@ function MyBookingsInner() {
             </p>
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button variant="outline" size="sm" onClick={() => setCancelTarget(null)}>Keep booking</Button>
-              <Button variant="danger" size="sm" onClick={() => { cancelBooking(cancelTarget); setCancelTarget(null); }}>Cancel booking</Button>
+              <Button variant="danger" size="sm" onClick={() => {
+                const target = bookings.find((b) => b.id === cancelTarget);
+                if (target) releaseBookingSeats(target.eventId, target.quantity, target.sectionId);
+                cancelBooking(cancelTarget);
+                setCancelTarget(null);
+              }}>Cancel booking</Button>
             </div>
           </Card>
         </div>

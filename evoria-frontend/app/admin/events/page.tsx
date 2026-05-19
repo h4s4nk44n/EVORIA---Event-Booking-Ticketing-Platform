@@ -5,14 +5,15 @@ import { IconBtn, PageHeader, Table, Td, Th, Tr } from '../../../components/admi
 import {
   IconCalendar, IconChevronDown, IconDownload, IconEye, IconFilter, IconMapPin, IconSearch, IconTag, IconTrash,
 } from '../../../components/icons';
-import { ADMIN_EVENTS_LIST } from '../../../data/admin';
+import { useEventsStore } from '../../../state/events';
 
 export default function AdminEventsPage() {
+  const { adminEvents } = useEventsStore();
   return (
     <div>
       <PageHeader
         title="Events"
-        subtitle={`${ADMIN_EVENTS_LIST.length} events across all organizers`}
+        subtitle={`${adminEvents.length} events across all organizers`}
         actions={
           <>
             <button className="inline-flex items-center gap-1.5 h-8 px-3 text-[12.5px] rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700">
@@ -50,7 +51,7 @@ export default function AdminEventsPage() {
           </tr>
         </thead>
         <tbody>
-          {ADMIN_EVENTS_LIST.map((e) => {
+          {adminEvents.map((e) => {
             const pct = Math.round((e.sold / e.capacity) * 100);
             return (
               <Tr key={e.id}>

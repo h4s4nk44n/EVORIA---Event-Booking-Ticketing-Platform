@@ -5,7 +5,8 @@ import {
   IconAlertTriangle, IconCalendar, IconChevronDown, IconDownload, IconShield,
   IconTag, IconTicket, IconTrash, IconTrendingDown, IconTrendingUp, IconUser, IconUsers,
 } from '../../../components/icons';
-import { ADMIN_ACTIVITY, ADMIN_EVENTS_LIST, SPARK, type AdminActivityKind } from '../../../data/admin';
+import { ADMIN_ACTIVITY, SPARK, type AdminActivityKind } from '../../../data/admin';
+import { useEventsStore } from '../../../state/events';
 
 export const metadata = { title: 'Dashboard | EVORIA Admin' };
 
@@ -13,7 +14,8 @@ export default function AdminDashboardPage() {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const bars = [420, 512, 488, 602, 655, 640, 712];
   const maxB = Math.max(...bars);
-  const topEvents = ADMIN_EVENTS_LIST
+  const { adminEvents } = useEventsStore();
+  const topEvents = adminEvents
     .map((e) => ({ ...e, pct: Math.round((e.sold / e.capacity) * 100) }))
     .sort((a, b) => b.sold - a.sold)
     .slice(0, 5);

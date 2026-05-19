@@ -7,7 +7,8 @@ import {
   IconChevronLeft, IconCheck, IconMinus, IconPlus, IconShield, IconBell, IconTicket,
   IconUser, IconCalendar, IconCalendarDays, IconDownload, IconShare, IconArrowRight,
 } from '@/components/icons';
-import { EVENTS } from '@/data/events';
+import { useEventsStore } from '@/state/events';
+
 import { ARCHETYPES, TIERS, type ArchetypeKey } from '@/data/archetypes';
 import { useBookings } from '@/state/bookings';
 import { RequireAuth } from '@/components/auth-guards';
@@ -31,11 +32,26 @@ function BookingPageInner() {
   const id = params?.id;
   const sp = useSearchParams();
   const router = useRouter();
-  const archetype = (sp?.get('archetype') || 'stadium') as ArchetypeKey;
+  const { publicEvents, recordBooking, sectionSoldDelta, eventArchetype } = useEventsStore();
+  // Lock the seat map to the event's archetype, ignore any URL override
+  // so users can't pick a different layout than the one the organizer set.
+  const evForArchetype = publicEvents.find((e) => e.id === id);
+  const archetype = evForArchetype ? eventArchetype(evForArchetype) : 'stadium';
   const sectionId = sp?.get('section') || '';
-  const ev = EVENTS.find((e) => e.id === id) || EVENTS[0];
+  const ev = publicEvents.find((e) => e.id === id) || publicEvents[0];
   const arc = ARCHETYPES[archetype];
-  const section = arc.sections.find((s) => s.id === sectionId) || arc.sections[0];
+  const baseSection = arc.sections.find((s) => s.id === sectionId) || arc.sections[0];
+  // Fold the live booking delta into the section snapshot before we render
+  // counts / decide whether the user can still buy seats here.
+  const liveSold = Math.min(
+    baseSection.capacity,
+    baseSection.sold + sectionSoldDelta(id ?? '', baseSection.id),
+  );
+  const section = {
+    ...baseSection,
+    sold: liveSold,
+    soldOut: baseSection.soldOut || liveSold >= baseSection.capacity,
+  };
   const tier = TIERS[section.tier];
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -64,6 +80,7 @@ function BookingPageInner() {
       id: newId,
       eventId: ev.id,
       section: section.name,
+      sectionId: section.id,
       price: section.price,
       quantity,
       seats: Array.from({ length: quantity }, (_, i) => `Row G · ${20 + i}`),
@@ -71,6 +88,7 @@ function BookingPageInner() {
       bookedAt: new Date().toISOString().slice(0, 10),
     };
     addBooking(booking);
+    recordBooking(ev.id, quantity, section.id);
     setStep(3);
   };
 

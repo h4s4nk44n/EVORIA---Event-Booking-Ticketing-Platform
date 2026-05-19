@@ -8,6 +8,8 @@ type SeatMapProps = {
   onSelect?: (s: SeatSection) => void;
   compact?: boolean;
   onHover?: (s: SeatSection | null) => void;
+  /** Override the archetype's static sections (used to fold live `sold` deltas in). */
+  sections?: SeatSection[];
 };
 
 export const SeatMap = ({
@@ -16,8 +18,10 @@ export const SeatMap = ({
   onSelect,
   compact = false,
   onHover,
+  sections,
 }: SeatMapProps) => {
   const arc = ARCHETYPES[archetype] || ARCHETYPES.stadium;
+  const displaySections = sections ?? arc.sections;
   return (
     <div className="relative w-full">
       <svg
@@ -51,7 +55,7 @@ export const SeatMap = ({
         <rect x="0" y="0" width="800" height="480" className="fill-slate-50 dark:fill-slate-900" />
         <rect x="0" y="0" width="800" height="480" fill="url(#arenaLight)" />
 
-        {arc.sections.map((s) => {
+        {displaySections.map((s) => {
           const color = s.soldOut ? TIERS.soldout.hex : TIERS[s.tier].hex;
           const selected = selectedId === s.id;
           return (

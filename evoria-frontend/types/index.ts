@@ -47,6 +47,8 @@ export type Booking = {
   id: string;
   eventId: string;
   section: string;
+  /** Archetype section id (e.g. 'vip-center'); optional for legacy bookings. */
+  sectionId?: string;
   seats: string[];
   price: number;
   quantity: number;

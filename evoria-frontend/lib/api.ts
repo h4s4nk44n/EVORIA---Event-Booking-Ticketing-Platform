@@ -28,6 +28,21 @@ export type ApiResult<T> =
   | { ok: false; type: "server_error"; message: string; status: number }
   | { ok: false; type: "network_error"; message: string; status: null };
 
+/** Subset of `ApiResult<T>` covering every failure variant. */
+export type ApiFailure<T> = Exclude<ApiResult<T>, { ok: true }>;
+
+/**
+ * Cast a known-failed `ApiResult` to its failure subtype so callers can
+ * `switch` on `result.type` directly.  This works around a TS narrowing
+ * quirk in non-`strictNullChecks` projects where `if (!r.ok)` does not
+ * narrow `r.type`.
+ *
+ * Call this only after you have already verified `result.ok === false`.
+ */
+export function toFailure<T>(result: ApiResult<T>): ApiFailure<T> {
+  return result as ApiFailure<T>;
+}
+
 /** Options forwarded to the underlying fetch call (minus method/body/headers,
  *  which are controlled by the helper functions). */
 export type ApiRequestOptions = Omit<RequestInit, "method" | "body" | "headers">;

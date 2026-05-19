@@ -8,7 +8,8 @@ import {
   IconChevronLeft, IconHeart, IconShare, IconCalendarDays, IconClock, IconMapPin,
   IconUser, IconShield, IconFlame, IconArrowUpRight, IconArmchair, IconArrowRight, IconCheck,
 } from '@/components/icons';
-import { EVENTS, CATEGORIES } from '@/data/events';
+import { CATEGORIES } from '@/data/events';
+import { useEventsStore } from '@/state/events';
 import { ARCHETYPES, TIERS, type ArchetypeKey } from '@/data/archetypes';
 import type { Event as EventType, SeatSection } from '@/types';
 import { fmtDate, fmtTime, fmtDateLong } from '@/lib/utils';
@@ -17,15 +18,31 @@ export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
-  const ev = EVENTS.find((e) => e.id === id) || EVENTS[0];
-  const [archetype, setArchetype] = useState<ArchetypeKey>('stadium');
+  const { publicEvents, sectionSoldDelta, eventArchetype } = useEventsStore();
+  const ev = publicEvents.find((e) => e.id === id) || publicEvents[0];
+  // Each event has a single seat-map archetype – decided at creation time.
+  const archetype = eventArchetype(ev);
   const [selected, setSelected] = useState<SeatSection | null>(null);
   const [hovered, setHovered] = useState<SeatSection | null>(null);
-  const arc = ARCHETYPES[archetype];
+  const baseArc = ARCHETYPES[archetype];
+  // Layer live booking deltas onto each section so the availability bar,
+  // SOLD-OUT badge and seat-map colouring reflect what's actually been
+  // booked in this session.
+  const arc = {
+    ...baseArc,
+    sections: baseArc.sections.map((s) => {
+      const sold = Math.min(s.capacity, s.sold + sectionSoldDelta(ev.id, s.id));
+      return { ...s, sold, soldOut: s.soldOut || sold >= s.capacity };
+    }),
+  };
 
   useEffect(() => { setSelected(null); }, [archetype, id]);
 
-  const active = selected || hovered;
+
+  const activeRef = selected || hovered;
+  // Re-resolve the active section against the live `arc.sections` so its
+  // `sold`/`soldOut` numbers stay current even after a booking lands.
+  const active = activeRef ? (arc.sections.find((s) => s.id === activeRef.id) ?? activeRef) : null;
   const cat = CATEGORIES.find((c) => c.id === ev.category);
 
   const handleBook = () => {
@@ -69,7 +86,7 @@ export default function EventDetailPage() {
           <dl className="mt-5 divide-y divide-slate-100 dark:divide-slate-800 text-sm">
             <InfoRow icon={<IconCalendarDays size={16} />} label="Date" value={fmtDateLong(ev.date)} />
             <InfoRow icon={<IconClock size={16} />} label="Doors · Duration" value={`${ev.doorsOpen} · ${ev.duration}`} />
-            <InfoRow icon={<IconMapPin size={16} />} label="Venue" value={`${ev.venue}, ${ev.city}`} link="View map" />
+            <InfoRow icon={<IconMapPin size={16} />} label="Venue" value={`${ev.venue}, ${ev.city}`} link="View map" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${ev.venue}, ${ev.city}`)}`} />
             <InfoRow icon={<IconUser size={16} />} label="Organizer" value={ev.organizer} />
             <InfoRow icon={<IconShield size={16} />} label="Guarantee" value="Refundable up to 48h before" />
           </dl>
@@ -99,25 +116,10 @@ export default function EventDetailPage() {
               <div className="text-[11px] tracking-[0.18em] font-mono font-semibold text-slate-500 dark:text-slate-400">PICK YOUR SECTION</div>
               <h3 className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{arc.label}</h3>
             </div>
-            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-sm">
-              {(Object.keys(ARCHETYPES) as ArchetypeKey[]).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setArchetype(k)}
-                  className={cx(
-                    'px-3 h-8 rounded-md text-xs font-medium capitalize transition-colors',
-                    archetype === k
-                      ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white',
-                  )}
-                >
-                  {k}
-                </button>
-              ))}
-            </div>
+            <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 capitalize">{archetype} layout</div>
           </div>
           <div className="rounded-xl bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border border-slate-100 dark:border-slate-800 p-4">
-            <SeatMap archetype={archetype} selectedId={selected?.id} onSelect={setSelected} onHover={setHovered} />
+            <SeatMap archetype={archetype} sections={arc.sections} selectedId={selected?.id} onSelect={setSelected} onHover={setHovered} />
           </div>
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <SeatMapLegend />
@@ -143,7 +145,16 @@ export default function EventDetailPage() {
   );
 }
 
-const InfoRow = ({ icon, label, value, link }: { icon: ReactNode; label: string; value: string; link?: string }) => (
+const InfoRow = ({
+  icon, label, value, link, href,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  link?: string;
+  /** When provided, the trailing CTA becomes an actual external anchor. */
+  href?: string;
+}) => (
   <div className="py-3 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
       <span className="text-slate-400 dark:text-slate-500">{icon}</span>
@@ -151,7 +162,17 @@ const InfoRow = ({ icon, label, value, link }: { icon: ReactNode; label: string;
     </div>
     <div className="text-slate-900 dark:text-slate-100 font-medium text-right flex items-center gap-2">
       <span>{value}</span>
-      {link && <a className="text-brand-500 text-xs inline-flex items-center gap-1 hover:underline cursor-pointer">{link}<IconArrowUpRight size={12} /></a>}
+      {link && (
+        <a
+          className="text-brand-500 text-xs inline-flex items-center gap-1 hover:underline cursor-pointer"
+          href={href}
+          target={href ? '_blank' : undefined}
+          rel={href ? 'noopener noreferrer' : undefined}
+        >
+          {link}
+          <IconArrowUpRight size={12} />
+        </a>
+      )}
     </div>
   </div>
 );

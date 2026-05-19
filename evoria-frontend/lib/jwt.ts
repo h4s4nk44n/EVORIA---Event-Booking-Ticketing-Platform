@@ -6,10 +6,19 @@ const TOKEN_KEY = "token";
 // Storage helpers
 // ---------------------------------------------------------------------------
 
+/**
+ * Persists the JWT in both localStorage (for client-side `fetch`) AND in a
+ * non-HttpOnly cookie so the Edge `middleware.ts` route guard can read it.
+ *
+ * Without the cookie, navigating to a protected route triggers a server-side
+ * redirect to /login before the React app boots — even though the client-side
+ * `state/auth` thinks the user is signed in.
+ */
 export function storeToken(token: string): void {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_KEY, token);
-  }
+  if (typeof window === "undefined") return;
+  localStorage.setItem(TOKEN_KEY, token);
+  // 7 days; SameSite=Lax is fine because login is same-origin.
+  document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
 }
 
 export function retrieveToken(): string | null {
@@ -18,9 +27,34 @@ export function retrieveToken(): string | null {
 }
 
 export function removeToken(): void {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(TOKEN_KEY);
-  }
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(TOKEN_KEY);
+  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
+}
+
+/**
+ * Builds an unsigned JWT-shaped token whose payload carries the given role
+ * (and an `exp` 24h in the future). The Edge middleware only DECODES the
+ * payload – it doesn't verify the signature – so this is enough to satisfy
+ * the cookie-based guard when the backend is offline and we're running in
+ * demo mode. Roles are upper-cased to match `middleware.ts` ROLE_RULES.
+ */
+export function makeDemoJwt(email: string, role: string): string {
+  const enc = (obj: Record<string, unknown>) =>
+    btoa(JSON.stringify(obj))
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+  const header = enc({ alg: "none", typ: "JWT" });
+  const payload = enc({
+    sub: email,
+    email,
+    role: role.toUpperCase(),
+    exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,
+    demo: true,
+  });
+  return `${header}.${payload}.demo`;
 }
 
 // ---------------------------------------------------------------------------

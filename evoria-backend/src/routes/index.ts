@@ -7,6 +7,7 @@ import categoryRouter from './category.routes';
 import venueRouter from './venue.routes';
 import ticketRouter from './ticket.routes';
 import adminRouter from './admin.routes';
+import sectionRouter from './section.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/categories', categoryRouter);
 router.use('/venues', venueRouter);
 router.use('/tickets', ticketRouter);
 router.use('/admin', adminRouter);
+router.use('/', sectionRouter);
 
 export default router;

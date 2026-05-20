@@ -24,14 +24,20 @@ export async function listVenues(query?: { city?: string }) {
   return prisma.venue.findMany({
     where,
     orderBy: { name: 'asc' },
-    include: { _count: { select: { events: true } } },
+    include: {
+      sections: { orderBy: { sortOrder: 'asc' } },
+      _count: { select: { events: true } },
+    },
   });
 }
 
 export async function getVenueById(id: string) {
   const venue = await prisma.venue.findUnique({
     where: { id },
-    include: { _count: { select: { events: true } } },
+    include: {
+      sections: { orderBy: { sortOrder: 'asc' } },
+      _count: { select: { events: true } },
+    },
   });
   if (!venue) throw new AppError('Venue not found', 404);
   return venue;

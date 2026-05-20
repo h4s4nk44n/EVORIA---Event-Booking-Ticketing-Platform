@@ -1,7 +1,14 @@
 import { prisma } from '../config/prisma';
 import { AppError } from '../utils/AppError';
 
-export async function createBooking(userId: string, eventId: string, ticketId?: string) {
+export async function createBooking(
+  userId: string,
+  eventId: string,
+  ticketId?: string,
+  sectionId?: string,
+  quantity: number = 1,
+  seatLabel?: string,
+) {
   return await prisma.$transaction(async (tx) => {
     // Lock the event row (SELECT ... FOR UPDATE) to serialise concurrent bookings
     const rows = await tx.$queryRaw<
@@ -21,13 +28,38 @@ export async function createBooking(userId: string, eventId: string, ticketId?: 
     if (existingBooking)
       throw new AppError('You already have a booking for this event', 409);
 
-    const bookedCount = await tx.booking.count({ where: { eventId } });
+    // ── Event-level capacity check ──────────────────────────────
+    const totalBooked = await tx.booking.aggregate({
+      where: { eventId },
+      _sum: { quantity: true },
+    });
+    const eventBookedCount = totalBooked._sum.quantity ?? 0;
 
-    if (bookedCount >= event.capacity) {
+    if (eventBookedCount + quantity > event.capacity) {
       throw new AppError('This event is fully booked', 422);
     }
 
-    // If a ticket type is specified, verify availability
+    // ── Section-level capacity check (if section specified) ─────
+    if (sectionId) {
+      const sectionRows = await tx.$queryRaw<
+        { id: string; capacity: number; venueId: string }[]
+      >`SELECT id, capacity, "venueId" FROM sections WHERE id = ${sectionId} FOR UPDATE`;
+
+      const section = sectionRows[0];
+      if (!section) throw new AppError('Section not found', 404);
+
+      const sectionBooked = await tx.booking.aggregate({
+        where: { eventId, sectionId },
+        _sum: { quantity: true },
+      });
+      const sectionBookedCount = sectionBooked._sum.quantity ?? 0;
+
+      if (sectionBookedCount + quantity > section.capacity) {
+        throw new AppError('This section is fully booked', 422);
+      }
+    }
+
+    // ── Ticket type check (if specified) ────────────────────────
     if (ticketId) {
       const ticketRows = await tx.$queryRaw<
         { id: string; quantity: number; eventId: string }[]
@@ -45,11 +77,12 @@ export async function createBooking(userId: string, eventId: string, ticketId?: 
     }
 
     return tx.booking.create({
-      data: { userId, eventId, ticketId },
+      data: { userId, eventId, ticketId, sectionId, quantity, seatLabel },
       include: {
-        event:  { select: { id: true, title: true, dateTime: true } },
-        user:   { select: { id: true, name: true, email: true } },
-        ticket: { select: { id: true, type: true, price: true } },
+        event:   { select: { id: true, title: true, dateTime: true } },
+        user:    { select: { id: true, name: true, email: true } },
+        ticket:  { select: { id: true, type: true, price: true } },
+        section: { select: { id: true, name: true, tier: true, price: true } },
       },
     });
   });
@@ -87,6 +120,7 @@ export async function getMyBookings(userId: string, page: number, limit: number)
             _count: { select: { bookings: true } },
           },
         },
+        section: { select: { id: true, name: true, tier: true, price: true } },
       },
     }),
     prisma.booking.count({ where: { userId } }),

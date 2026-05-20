@@ -8,6 +8,7 @@ import {
   IconSearch, IconMapPin, IconX, IconCalendarDays,
 } from '@/components/icons';
 import { type OrganizerEvent, type OrganizerEventStatus } from '@/data/organizer';
+import type { CategoryId } from '@/types';
 import { useEventsStore } from '@/state/events';
 import { RequireRole } from '@/components/auth-guards';
 import { fmtMoney, fmtInt, fmtDateShort } from '@/lib/utils';
@@ -41,7 +42,13 @@ function DashboardInner() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const result = await apiGet<OrganizerEvent[]>('/events/mine');
+      // Backend returns { data: [...], total, page, limit, totalPages }
+      const result = await apiGet<{ data: Array<{
+        id: string; title: string; description: string; dateTime: string;
+        capacity: number; category?: { id: string; name: string } | null;
+        venue?: { id: string; name: string; city?: string; address?: string } | null;
+        bookedCount: number; availableSpots: number;
+      }>; total: number }>('/events/mine');
       if (cancelled) return;
       if (!result.ok) {
         const failure = toFailure(result);
@@ -50,8 +57,25 @@ function DashboardInner() {
         } else if (failure.type === 'server_error') {
           setApiError(failure.message);
         }
-      } else if (Array.isArray(result.data) && result.data.length > 0) {
-        setEvents(result.data);
+      } else {
+        const raw = Array.isArray(result.data) ? result.data : result.data?.data;
+        if (Array.isArray(raw) && raw.length > 0) {
+          // Map backend shape → OrganizerEvent shape used by the dashboard
+          const mapped: OrganizerEvent[] = raw.map((e) => ({
+            id: e.id,
+            title: e.title,
+            venue: e.venue?.name ?? 'Unknown venue',
+            city: e.venue?.city ?? e.venue?.address ?? '',
+            date: e.dateTime,
+            category: (e.category?.name?.toLowerCase() ?? 'concerts') as Exclude<CategoryId, 'all'>,
+            status: (e.availableSpots <= 0 ? 'soldout' : 'published') as OrganizerEventStatus,
+            capacity: e.capacity,
+            sold: e.bookedCount,
+            revenue: 0,    // Backend doesn't track revenue yet
+            avgPrice: 0,
+          }));
+          setEvents(mapped);
+        }
       }
       setLoading(false);
     })();

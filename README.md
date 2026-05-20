@@ -113,6 +113,24 @@ npm run dev
 | `RATE_LIMIT_WINDOW_MS` | Rate limit window in milliseconds         | `900000`                                 |
 | `RATE_LIMIT_AUTH_MAX`  | Max auth requests per window              | `10`                                     |
 
+## Frontend Setup
+
+The frontend (`evoria-frontend/`, Next.js) needs its own env file. In a separate terminal from the repo root:
+
+```bash
+cd evoria-frontend
+npm install
+cp .env.local.example .env.local   # safe local-dev defaults; nothing secret to fill in
+npm run dev
+```
+
+The app runs on http://localhost:3001 — keep this port, since the backend only allows it as a CORS origin.
+
+| Variable              | Description                          | Example                 |
+| --------------------- | ------------------------------------ | ----------------------- |
+| `NEXT_PUBLIC_API_URL` | Base URL of the backend API          | `http://localhost:3000` |
+| `PORT`                | Dev-server port (keep 3001 for CORS) | `3001`                  |
+
 ## Architecture
 
 ```
@@ -834,22 +852,38 @@ All errors follow a consistent format:
 
 ## Docker
 
-### Docker setup
-
-Before running Docker Compose, create a local `.env.docker` file from the example template and fill in the real secret values. This file is git-ignored and holds the secrets used by both the `db` and `backend` services (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `DATABASE_URL`, `JWT_SECRET`).
+The fastest way to run the whole stack (database + backend + frontend). From the repository root:
 
 ```bash
-cp evoria-backend/.env.docker.example evoria-backend/.env.docker
-# then edit evoria-backend/.env.docker and set real values
+docker compose up --build
 ```
 
-```bash
-# Build and run with Docker Compose
-docker compose up --build
+That's it — **no `.env` files to create**. Safe local-dev defaults are baked into `docker-compose.yml` and can be overridden from your shell if needed. On first start the backend automatically applies migrations and seeds demo data; the database lives in a named volume, so your data survives restarts and is only seeded once (when empty).
 
-# Or build manually
-docker build -t evoria-backend .
-docker run -p 3000:3000 --env-file .env evoria-backend
+| Service  | URL                   | Notes                            |
+|----------|-----------------------|----------------------------------|
+| Frontend | http://localhost:3001 | Next.js dev server               |
+| Backend  | http://localhost:3000 | Express API                      |
+| Database | localhost:5432        | PostgreSQL 16 (volume `pgdata`)  |
+
+Log in with any of the [seeded accounts](#seed-data-credentials) below (e.g. `admin@evoria.com` / `Admin1234!`).
+
+```bash
+docker compose up --build       # start everything (rebuild images)
+docker compose down             # stop
+docker compose down -v          # stop and wipe the DB volume (forces a fresh re-seed)
+docker compose logs -f backend  # follow backend logs
+```
+
+> The dev images bundle their dependencies, so contributors only need Docker — not Node or PostgreSQL installed locally. Code changes are picked up on the next `docker compose up --build`.
+
+### Production image (backend only)
+
+`evoria-backend/Dockerfile` is a lean, multi-stage **production** image. The accompanying `evoria-backend/docker-compose.yml` runs only the API + database and reads secrets from a git-ignored `.env.docker`:
+
+```bash
+cp evoria-backend/.env.docker.example evoria-backend/.env.docker   # then fill in real secrets
+cd evoria-backend && docker compose up --build
 ```
 
 ## Seed Data Credentials

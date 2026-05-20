@@ -33,9 +33,9 @@ function LoginPageInner() {
   const [error, setError] = useState<string | null>(null);
 
   const demos = [
-    { role: 'Attendee',  email: 'deniz.a@gmail.com', hint: 'registered via sign-up form' },
-    { role: 'Organizer', email: 'mira@evoria.live',  hint: 'registered via sign-up form' },
-    { role: 'Admin',     email: 'kaan.y@icloud.com', hint: 'seeded — cannot self-register' },
+    { role: 'Attendee',  email: 'carol@evoria.com', password: 'Carol1234!', hint: 'seeded attendee' },
+    { role: 'Organizer', email: 'alice@evoria.com', password: 'Alice1234!', hint: 'seeded organizer' },
+    { role: 'Admin',     email: 'admin@evoria.com', password: 'Admin1234!', hint: 'seeded admin' },
   ];
 
   /**
@@ -45,8 +45,8 @@ function LoginPageInner() {
    */
   function persistDemoSession(demoEmail: string) {
     const role =
-      demoEmail === 'mira@evoria.live'  ? 'organizer'
-      : demoEmail === 'kaan.y@icloud.com' ? 'admin'
+      demoEmail === 'alice@evoria.com' ? 'organizer'
+      : demoEmail === 'admin@evoria.com' ? 'admin'
       : 'attendee';
     storeToken(makeDemoJwt(demoEmail, role));
   }
@@ -100,8 +100,8 @@ function LoginPageInner() {
     void performLogin({ email, password });
   };
 
-  const quickLogin = (demoEmail: string) => {
-    void performLogin({ email: demoEmail, password: 'demo-password' }, true);
+  const quickLogin = (demo: { email: string; password: string }) => {
+    void performLogin({ email: demo.email, password: demo.password }, true);
   };
 
   return (
@@ -201,7 +201,7 @@ function LoginPageInner() {
                 <button
                   key={d.role}
                   type="button"
-                  onClick={() => quickLogin(d.email)}
+                  onClick={() => quickLogin(d)}
                   className={cx(
                     'w-full text-left px-3.5 py-2.5 flex items-center gap-3 hover:bg-slate-50',
                     i < demos.length - 1 && 'border-b border-slate-100',

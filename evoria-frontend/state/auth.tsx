@@ -5,15 +5,15 @@ import type { AuthProfile, Role } from '../types';
 import { decodeJwtPayload, makeDemoJwt, removeToken, retrieveToken, storeToken } from '../lib/jwt';
 
 export const ROLE_PROFILES: Record<Role, AuthProfile> = {
-  attendee:  { role: 'attendee',  name: 'Deniz Aslan',  email: 'deniz.a@gmail.com' },
-  organizer: { role: 'organizer', name: 'Mira Kaan',    email: 'mira@evoria.live'  },
-  admin:     { role: 'admin',     name: 'Kaan Yılmaz',  email: 'kaan.y@icloud.com' },
+  attendee:  { role: 'attendee',  name: 'Carol Attendee',  email: 'carol@evoria.com' },
+  organizer: { role: 'organizer', name: 'Alice Organizer', email: 'alice@evoria.com' },
+  admin:     { role: 'admin',     name: 'Admin User',      email: 'admin@evoria.com' },
 };
 
 const ROLE_BY_EMAIL: Record<string, Role> = {
-  'deniz.a@gmail.com': 'attendee',
-  'mira@evoria.live':  'organizer',
-  'kaan.y@icloud.com': 'admin',
+  'carol@evoria.com': 'attendee',
+  'alice@evoria.com': 'organizer',
+  'admin@evoria.com': 'admin',
 };
 
 type AuthContextValue = {

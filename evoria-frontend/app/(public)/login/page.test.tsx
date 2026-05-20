@@ -85,11 +85,11 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
     // Click the first demo button (Attendee).
-    const demoButtons = screen.getAllByText(/registered via sign-up form/i);
+    const demoButtons = screen.getAllByText(/seeded attendee/i);
     await userEvent.click(demoButtons[0].closest('button') as HTMLButtonElement);
 
     await waitFor(() => {
-      expect(login).toHaveBeenCalledWith('deniz.a@gmail.com');
+      expect(login).toHaveBeenCalledWith('carol@evoria.com');
     });
     expect(replace).toHaveBeenCalledWith('/');
   });

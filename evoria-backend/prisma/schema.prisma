@@ -60,6 +60,8 @@ model Event {
 
 model Booking {
   id        String    @id @default(cuid())
+  quantity  Int       @default(1)
+  seatLabel String?   // e.g. "Row G · 20, Row G · 21"
   createdAt DateTime  @default(now())
 
   userId    String
@@ -67,6 +69,9 @@ model Booking {
 
   ticketId  String?
   ticket    Ticket?   @relation(fields: [ticketId], references: [id])
+
+  sectionId String?
+  section   Section?  @relation(fields: [sectionId], references: [id])
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -91,10 +96,29 @@ model Venue {
   address  String
   city     String
   capacity Int
+  layout   String @default("stadium") // archetype: stadium | theater | conference | open-air
 
   events   Event[]
+  sections Section[]
 
   @@map("venues")
+}
+
+model Section {
+  id       String @id @default(cuid())
+  name     String            // e.g. "VIP Left", "Block A", "Balcony"
+  tier     String @default("standard") // vip | premium | standard | budget
+  price    Float
+  capacity Int
+  sortOrder Int  @default(0) // display ordering on seat map
+
+  venueId  String
+  venue    Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@unique([venueId, name])
+  @@map("sections")
 }
 
 model Ticket {

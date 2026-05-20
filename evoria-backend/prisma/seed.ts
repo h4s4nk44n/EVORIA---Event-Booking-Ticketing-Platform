@@ -8,6 +8,7 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.ticket.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.section.deleteMany();
   await prisma.venue.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
@@ -69,12 +70,56 @@ async function main() {
     prisma.category.create({ data: { name: 'Food & Drink', description: 'Food festivals and tastings' } }),
   ]);
 
-  // Venues
-  const [venueHall, venueHub, venuePark] = await Promise.all([
-    prisma.venue.create({ data: { name: 'Grand Hall', address: '123 Main St', city: 'Istanbul', capacity: 500 } }),
-    prisma.venue.create({ data: { name: 'Tech Hub', address: '456 Innovation Blvd', city: 'Ankara', capacity: 200 } }),
-    prisma.venue.create({ data: { name: 'City Park', address: '789 Park Ave', city: 'Istanbul', capacity: 1000 } }),
+  // Venues (with layout archetypes)
+  const [venueHall, venueHub, venuePark, venueTheater] = await Promise.all([
+    prisma.venue.create({ data: { name: 'Grand Hall', address: '123 Main St', city: 'Istanbul', capacity: 500, layout: 'stadium' } }),
+    prisma.venue.create({ data: { name: 'Tech Hub', address: '456 Innovation Blvd', city: 'Ankara', capacity: 200, layout: 'conference' } }),
+    prisma.venue.create({ data: { name: 'City Park', address: '789 Park Ave', city: 'Istanbul', capacity: 1000, layout: 'open-air' } }),
+    prisma.venue.create({ data: { name: 'Ankara Theater', address: '10 Culture Ave', city: 'Ankara', capacity: 350, layout: 'theater' } }),
   ]);
+
+  // ── Venue Sections (layout templates) ───────────────────────────
+
+  // Stadium layout — Grand Hall
+  await prisma.section.createMany({
+    data: [
+      { venueId: venueHall.id, name: 'VIP Front',      tier: 'vip',      price: 150, capacity: 50,  sortOrder: 1 },
+      { venueId: venueHall.id, name: 'Premium Left',   tier: 'premium',  price: 90,  capacity: 80,  sortOrder: 2 },
+      { venueId: venueHall.id, name: 'Premium Right',  tier: 'premium',  price: 90,  capacity: 80,  sortOrder: 3 },
+      { venueId: venueHall.id, name: 'Standard A',     tier: 'standard', price: 55,  capacity: 100, sortOrder: 4 },
+      { venueId: venueHall.id, name: 'Standard B',     tier: 'standard', price: 55,  capacity: 100, sortOrder: 5 },
+      { venueId: venueHall.id, name: 'Budget Upper',   tier: 'budget',   price: 30,  capacity: 90,  sortOrder: 6 },
+    ],
+  });
+
+  // Theater layout — Ankara Theater
+  await prisma.section.createMany({
+    data: [
+      { venueId: venueTheater.id, name: 'Orchestra',    tier: 'vip',      price: 120, capacity: 80,  sortOrder: 1 },
+      { venueId: venueTheater.id, name: 'Mezzanine',    tier: 'premium',  price: 75,  capacity: 100, sortOrder: 2 },
+      { venueId: venueTheater.id, name: 'Balcony Left',  tier: 'standard', price: 45,  capacity: 85,  sortOrder: 3 },
+      { venueId: venueTheater.id, name: 'Balcony Right', tier: 'standard', price: 45,  capacity: 85,  sortOrder: 4 },
+    ],
+  });
+
+  // Conference layout — Tech Hub
+  await prisma.section.createMany({
+    data: [
+      { venueId: venueHub.id, name: 'Front Row',     tier: 'vip',      price: 100, capacity: 30,  sortOrder: 1 },
+      { venueId: venueHub.id, name: 'Middle Block',   tier: 'standard', price: 50,  capacity: 100, sortOrder: 2 },
+      { venueId: venueHub.id, name: 'Rear Block',     tier: 'budget',   price: 25,  capacity: 70,  sortOrder: 3 },
+    ],
+  });
+
+  // Open-air layout — City Park
+  await prisma.section.createMany({
+    data: [
+      { venueId: venuePark.id, name: 'Golden Circle', tier: 'vip',      price: 130, capacity: 150, sortOrder: 1 },
+      { venueId: venuePark.id, name: 'Standing A',    tier: 'standard', price: 50,  capacity: 300, sortOrder: 2 },
+      { venueId: venuePark.id, name: 'Standing B',    tier: 'standard', price: 50,  capacity: 300, sortOrder: 3 },
+      { venueId: venuePark.id, name: 'Lawn',          tier: 'budget',   price: 25,  capacity: 250, sortOrder: 4 },
+    ],
+  });
 
   const now = new Date();
   const future = (days: number) => new Date(now.getTime() + days * 86400000);

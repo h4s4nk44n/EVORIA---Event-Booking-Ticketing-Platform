@@ -65,6 +65,18 @@ export const deleteEvent = async (req: Request, res: Response, next: NextFunctio
   }
 };
 
+export const listMyEvents = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const result = await eventService.listMyEvents(req.user.userId, {
+      page:  Number(req.query.page)  || undefined,
+      limit: Number(req.query.limit) || undefined,
+    });
+    res.json(result);
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const stats = await eventService.getEventStats(

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Badge, Input, cx } from '@/components/ui';
 import { IconCalendar, IconCheck, IconChevronDown, IconChevronLeft, IconClock } from '@/components/icons';
 import { VENUES } from '@/data/organizer';
@@ -10,7 +10,7 @@ import { ARCHETYPES } from '@/data/archetypes';
 import { RequireRole } from '@/components/auth-guards';
 import type { Archetype, CategoryId, SeatSection, TierKey } from '@/types';
 import { fmtInt, fmtMoney } from '@/lib/utils';
-import { apiPost, toFailure } from '@/lib/api';
+import { apiGet, apiPost, apiPut, toFailure } from '@/lib/api';
 import { useEventsStore } from '@/state/events';
 
 type Row = {
@@ -44,14 +44,34 @@ function priceToColor(price: number, min: number, max: number): string {
 export default function CreateEventPage() {
   return (
     <RequireRole roles={['organizer']}>
-      <CreateEventInner />
+      <Suspense fallback={null}>
+        <CreateEventInner />
+      </Suspense>
     </RequireRole>
   );
 }
 
+/** Response shape from GET /events/:id */
+type EventDetail = {
+  event: {
+    id: string;
+    title: string;
+    description: string;
+    dateTime: string;
+    capacity: number;
+    category?: { id: string; name: string } | null;
+    venue?: { id: string; name: string } | null;
+    tickets?: { id: string; type: string; price: number; quantity: number }[];
+  };
+};
+
 function CreateEventInner() {
   const router = useRouter();
-  const { addEvent } = useEventsStore();
+  const searchParams = useSearchParams();
+  const editId = searchParams?.get('edit') || null;
+  const isEditMode = !!editId;
+
+  const { addEvent, organizerEvents } = useEventsStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -63,6 +83,7 @@ function CreateEventInner() {
   const [status, setStatus] = useState<StatusKey>('draft');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingEvent, setLoadingEvent] = useState(isEditMode);
 
   const venue = VENUES.find((v) => v.id === venueId) || VENUES[0];
   const archetype = venue.archetype;
@@ -72,7 +93,90 @@ function CreateEventInner() {
     templateSections.map((s) => ({ id: s.id, name: s.name, tier: s.tier, price: s.price, capacity: s.capacity })),
   );
 
+  // ── Fetch existing event when in edit mode ───────────────────
+  const [venueLoaded, setVenueLoaded] = useState(false);
+
+  /** Populates form fields from any event-like object (API or local store). */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const populateForm = (ev: any) => {
+    setTitle(ev.title || '');
+    setDescription(ev.description || '');
+    const dtStr = ev.dateTime || ev.date;
+    if (dtStr) {
+      const dt = new Date(dtStr);
+      if (!isNaN(dt.getTime())) {
+        setDate(dt.toISOString().slice(0, 10));
+        setTime(dt.toISOString().slice(11, 16));
+      }
+    }
+    // Category — from API object or local store string
+    const catId = ev.category?.id ?? ev.category;
+    if (catId) {
+      const match = CATEGORIES.find(
+        (c) => c.id === catId || c.label.toLowerCase() === (ev.category?.name ?? '').toLowerCase(),
+      );
+      if (match && match.id !== 'all') setCategory(match.id as Exclude<CategoryId, 'all'>);
+    }
+    // Venue — from API object or local store string
+    const vId = ev.venue?.id ?? ev.venueId;
+    const vName = ev.venue?.name ?? ev.venue;
+    if (vId || vName) {
+      const vMatch = VENUES.find((v) => v.id === vId || v.name === vName);
+      if (vMatch) {
+        setVenueId(vMatch.id);
+        setVenueLoaded(true);
+      }
+    }
+    setStatus('published');
+  };
+
   useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    (async () => {
+      setLoadingEvent(true);
+
+      // 1) Try the real API first
+      const res = await apiGet<EventDetail>(`/events/${editId}`);
+      if (cancelled) return;
+
+      if (res.ok) {
+        const ev = res.data?.event ?? res.data;
+        populateForm(ev);
+        setLoadingEvent(false);
+        return;
+      }
+
+      // 2) Fallback: look up the event in the local store (works offline / with seed IDs)
+      const local = organizerEvents.find((e) => e.id === editId);
+      if (local) {
+        populateForm(local);
+        setLoadingEvent(false);
+        return;
+      }
+
+      // 3) Neither source had it — show a useful error
+      const f = toFailure(res);
+      if (f.type === 'network_error') {
+        setError('Backend is offline and event not found in local data.');
+      } else if (f.type === 'unauthorized') {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError(`Failed to load event: ${f.type === 'server_error' ? f.message : 'Event not found'}`);
+      }
+      setLoadingEvent(false);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId]);
+
+  // Only reset sections from venue template when the user manually changes the venue,
+  // NOT when we loaded the venue from the existing event.
+  useEffect(() => {
+    if (venueLoaded) {
+      setVenueLoaded(false);
+      return;
+    }
     setRows(
       ARCHETYPES[archetype].sections.map((s) => ({
         id: s.id,
@@ -82,6 +186,7 @@ function CreateEventInner() {
         capacity: s.capacity,
       })),
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venueId, archetype]);
 
   const priceRange = useMemo(() => {
@@ -114,9 +219,7 @@ function CreateEventInner() {
   const handleCancel = () => router.push('/dashboard');
 
   /**
-   * POST /events – persists the new event. We rely on the server's response
-   * for the canonical id; on network failure we still navigate so the demo
-   * experience is unbroken.
+   * POST /events (create) or PUT /events/:id (edit).
    */
   const handleSave = async (s: StatusKey) => {
     if (!canSubmit) return;
@@ -134,29 +237,39 @@ function CreateEventInner() {
       sections: rows,
     };
 
-    const result = await apiPost<{ id: string }, CreateEventPayload>('/events', payload);
+    // Build the body the backend expects for PUT /events/:id
+    // Zod datetime() requires ISO 8601 with timezone — append Z for UTC
+    const isoDateTime = `${date}T${time}:00.000Z`;
+    const apiBody = {
+      title: payload.title,
+      description: payload.description,
+      dateTime: isoDateTime,
+      capacity: totalCapacity,
+      venueId: payload.venueId,
+    };
 
-    // Local-side mirror: always persist a created event in the store so the
-    // dashboard list + public events page update immediately, regardless of
-    // whether the backend persisted it. (When the backend IS up we still
-    // mirror so the UI does not have to wait for a refetch.)
-    addEvent(payload);
+    const result = isEditMode
+      ? await apiPut<{ id: string }>(`/events/${editId}`, apiBody)
+      : await apiPost<{ id: string }, CreateEventPayload>('/events', payload);
+
+    if (!isEditMode) {
+      addEvent(payload);
+    }
 
     if (!result.ok) {
       const failure = toFailure(result);
       if (failure.type === 'network_error') {
-        // Backend unreachable – we already mirrored locally; just navigate.
         router.push('/dashboard');
         return;
       }
       if (failure.type === 'validation') {
         setError(failure.errors.message || 'Please review the form fields.');
       } else if (failure.type === 'unauthorized') {
-        setError('You are not authorized to create events.');
+        setError('You are not authorized to modify events.');
       } else if (failure.type === 'server_error') {
         setError(failure.message);
       } else {
-        setError('Failed to save event.');
+        setError(isEditMode ? 'Failed to update event.' : 'Failed to save event.');
       }
       setSubmitting(false);
       return;
@@ -164,6 +277,18 @@ function CreateEventInner() {
 
     router.push('/dashboard');
   };
+
+  if (loadingEvent) {
+    return (
+      <div className="mx-auto max-w-6xl px-6 md:px-10 py-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-6 w-96 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-enter mx-auto max-w-6xl px-6 md:px-10 py-8">
@@ -176,17 +301,25 @@ function CreateEventInner() {
 
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">New event</div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Create event</h1>
+          <div className="text-[11px] font-mono uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">
+            {isEditMode ? 'Edit event' : 'New event'}
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            {isEditMode ? 'Edit event' : 'Create event'}
+          </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Fill in basic info, pick a venue template, set pricing per section.
+            {isEditMode
+              ? 'Update event details, venue, and section pricing.'
+              : 'Fill in basic info, pick a venue template, set pricing per section.'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-          <Button variant="secondary" onClick={() => handleSave('draft')} disabled={submitting}>Save draft</Button>
+          {!isEditMode && (
+            <Button variant="secondary" onClick={() => handleSave('draft')} disabled={submitting}>Save draft</Button>
+          )}
           <Button variant="primary" disabled={!canSubmit || submitting} onClick={() => handleSave(status)} leftIcon={<IconCheck size={16} />}>
-            {submitting ? 'Saving…' : status === 'published' ? 'Publish event' : 'Save as draft'}
+            {submitting ? 'Saving…' : isEditMode ? 'Update event' : status === 'published' ? 'Publish event' : 'Save as draft'}
           </Button>
         </div>
       </div>

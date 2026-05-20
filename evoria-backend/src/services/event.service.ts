@@ -129,6 +129,8 @@ export async function updateEvent(
     description: string;
     dateTime: string;
     capacity: number;
+    categoryId: string;
+    venueId: string;
   }>
 ) {
   const event = await prisma.event.findUnique({ where: { id: eventId } });
@@ -149,10 +151,12 @@ export async function updateEvent(
   return prisma.event.update({
     where: { id: eventId },
     data: {
-      ...data,
-      ...(data.title && { title:       xss(data.title) }),
+      ...(data.title && { title: xss(data.title) }),
       ...(data.description && { description: xss(data.description) }),
-      ...(data.dateTime && { dateTime:     new Date(data.dateTime) }),
+      ...(data.dateTime && { dateTime: new Date(data.dateTime) }),
+      ...(data.capacity !== undefined && { capacity: data.capacity }),
+      ...(data.categoryId && { categoryId: data.categoryId }),
+      ...(data.venueId && { venueId: data.venueId }),
     },
   });
 }
@@ -167,6 +171,46 @@ export async function deleteEvent(organizerId: string, eventId: string) {
   
   // Not: In prisma schema, bookings are set to cascade delete with 
   // 'onDelete: Cascade', so we don't need to manually delete bookings here.
+}
+
+export async function listMyEvents(
+  organizerId: string,
+  query: { page?: number; limit?: number }
+) {
+  const page  = Math.max(1, query.page  || 1);
+  const limit = Math.min(50, query.limit || 10);
+  const skip  = (page - 1) * limit;
+
+  const where: Prisma.EventWhereInput = { organizerId };
+
+  const [events, total] = await prisma.$transaction([
+    prisma.event.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { dateTime: 'asc' },
+      include: {
+        category: true,
+        venue: true,
+        _count: { select: { bookings: true } },
+      },
+    }),
+    prisma.event.count({ where }),
+  ]);
+
+  const data = events.map(e => ({
+    id: e.id,
+    title: e.title,
+    description: e.description,
+    dateTime: e.dateTime,
+    capacity: e.capacity,
+    category: e.category,
+    venue: e.venue,
+    bookedCount: e._count.bookings,
+    availableSpots: e.capacity - e._count.bookings,
+  }));
+
+  return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
 export async function getEventStats(organizerId: string, eventId: string) {

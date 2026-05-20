@@ -128,12 +128,13 @@ async function request<TResponse>(
       return { ok: false, type: "validation", errors, status: 400 };
     }
 
-    // ── 5xx Server errors ─────────────────────────────────────────────────
-    if (response.status >= 500) {
+    // ── 4xx / 5xx Server errors (403, 404, 409, 422, 500+, etc.) ───────
+    if (response.status >= 402) {
       let message = `Server error (${response.status})`;
       try {
         const json = await response.json();
         if (json?.message) message = json.message;
+        else if (json?.error) message = json.error;
       } catch {
         // Ignore non-JSON bodies.
       }
